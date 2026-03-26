@@ -1,0 +1,316 @@
+[Seed] Deterministic mode enabled (may reduce speed).
+[Seed] Deterministic mode enabled.
+Calculating simulation parameters...
+Bifurcation points: 6.44569072482332, 9.93441120446710
+Generating simulation data...
+Total simulations to run: 2601
+Simulating control param 1/51...Simulating control param 6/51...Simulating control param 11/51...Simulating control param 16/51...Simulating control param 21/51...Simulating control param 26/51...Simulating control param 31/51...Simulating control param 36/51...Simulating control param 41/51...Simulating control param 46/51...Simulating control param 51/51...
+Simulation complete. Total samples: 2601
+Scaling data...
+Calculating derivatives...
+Converting to tensors...
+Starting 10-Fold Cross Validation...
+
+--- FOLD 1/10 ---
+[Seed] Deterministic mode enabled (may reduce speed).
+Epoch 0: Train Loss = 2.715428e-01, Val Loss = 2.977784e-01, Time = 2.457146e+00, lr = 1.000000e-01
+Epoch 1: Train Loss = 2.945023e-01, Val Loss = 2.983873e-01, Time = 2.394925e+00, lr = 1.000000e-01
+Epoch 2: Train Loss = 2.945040e-01, Val Loss = 2.974004e-01, Time = 2.556869e+00, lr = 1.000000e-01
+Epoch 3: Train Loss = 2.944933e-01, Val Loss = 2.986153e-01, Time = 2.493030e+00, lr = 1.000000e-01
+Epoch 4: Train Loss = 2.944426e-01, Val Loss = 2.968590e-01, Time = 2.592428e+00, lr = 1.000000e-01
+Epoch 5: Train Loss = 2.945145e-01, Val Loss = 2.957008e-01, Time = 2.457340e+00, lr = 1.000000e-01
+Epoch 10: Train Loss = 2.944583e-01, Val Loss = 2.980859e-01, Time = 2.306946e+00, lr = 1.000000e-01
+Epoch 20: Train Loss = 2.945184e-01, Val Loss = 2.962340e-01, Time = 2.695394e+00, lr = 5.000000e-02
+Epoch 30: Train Loss = 2.944470e-01, Val Loss = 2.943669e-01, Time = 2.798507e+00, lr = 2.500000e-02
+Epoch 40: Train Loss = 2.944190e-01, Val Loss = 2.959124e-01, Time = 2.359753e+00, lr = 2.500000e-02
+Epoch 50: Train Loss = 2.944163e-01, Val Loss = 2.961584e-01, Time = 2.533185e+00, lr = 1.250000e-02
+Epoch 60: Train Loss = 2.944606e-01, Val Loss = 3.004342e-01, Time = 2.326314e+00, lr = 6.250000e-03
+Epoch 70: Train Loss = 2.944577e-01, Val Loss = 2.952307e-01, Time = 2.463030e+00, lr = 6.250000e-03
+Epoch 80: Train Loss = 2.944771e-01, Val Loss = 2.953501e-01, Time = 2.507048e+00, lr = 3.125000e-03
+Epoch 90: Train Loss = 2.944809e-01, Val Loss = 2.981942e-01, Time = 2.355385e+00, lr = 1.562500e-03
+Epoch 100: Train Loss = 2.944207e-01, Val Loss = 2.955080e-01, Time = 2.331772e+00, lr = 7.812500e-04
+Epoch 110: Train Loss = 2.944760e-01, Val Loss = 2.969773e-01, Time = 2.382832e+00, lr = 3.906250e-04
+Epoch 120: Train Loss = 2.945065e-01, Val Loss = 2.973595e-01, Time = 2.288320e+00, lr = 3.906250e-04
+Epoch 130: Train Loss = 2.945031e-01, Val Loss = 2.942294e-01, Time = 2.319638e+00, lr = 1.953125e-04
+Epoch 140: Train Loss = 2.944904e-01, Val Loss = 2.987122e-01, Time = 2.360662e+00, lr = 9.765625e-05
+Epoch 150: Train Loss = 2.944927e-01, Val Loss = 2.953639e-01, Time = 2.470253e+00, lr = 4.882813e-05
+Epoch 160: Train Loss = 2.944658e-01, Val Loss = 2.981698e-01, Time = 2.408909e+00, lr = 2.441406e-05
+Epoch 170: Train Loss = 2.944625e-01, Val Loss = 2.940783e-01, Time = 2.477723e+00, lr = 1.220703e-05
+Epoch 180: Train Loss = 2.944716e-01, Val Loss = 2.980763e-01, Time = 2.461896e+00, lr = 6.103516e-06
+Epoch 190: Train Loss = 2.945003e-01, Val Loss = 2.974325e-01, Time = 2.583472e+00, lr = 6.103516e-06
+Epoch 199: Train Loss = 2.944999e-01, Val Loss = 2.976007e-01, Time = 3.087915e+00, lr = 3.051758e-06
+Fold 1 Best Val Loss: 2.933471e-01
+
+--- FOLD 2/10 ---
+[Seed] Deterministic mode enabled (may reduce speed).
+Epoch 0: Train Loss = 3.068022e-01, Val Loss = 2.904440e-01, Time = 2.391441e+00, lr = 1.000000e-01
+Epoch 1: Train Loss = 2.952857e-01, Val Loss = 2.868112e-01, Time = 2.727431e+00, lr = 1.000000e-01
+Epoch 2: Train Loss = 2.952561e-01, Val Loss = 2.909370e-01, Time = 2.785562e+00, lr = 1.000000e-01
+Epoch 3: Train Loss = 2.952485e-01, Val Loss = 2.892399e-01, Time = 2.770359e+00, lr = 1.000000e-01
+Epoch 4: Train Loss = 2.952453e-01, Val Loss = 2.897525e-01, Time = 2.491753e+00, lr = 1.000000e-01
+Epoch 5: Train Loss = 2.953003e-01, Val Loss = 2.907275e-01, Time = 2.436952e+00, lr = 1.000000e-01
+Epoch 10: Train Loss = 2.952380e-01, Val Loss = 2.912345e-01, Time = 2.464059e+00, lr = 1.000000e-01
+Epoch 20: Train Loss = 2.952842e-01, Val Loss = 2.878872e-01, Time = 2.507369e+00, lr = 5.000000e-02
+Epoch 30: Train Loss = 2.952293e-01, Val Loss = 2.878763e-01, Time = 2.638879e+00, lr = 2.500000e-02
+Epoch 40: Train Loss = 2.952955e-01, Val Loss = 2.886857e-01, Time = 2.706888e+00, lr = 1.250000e-02
+Epoch 50: Train Loss = 2.952519e-01, Val Loss = 2.893266e-01, Time = 2.613652e+00, lr = 6.250000e-03
+Epoch 60: Train Loss = 2.952830e-01, Val Loss = 2.906888e-01, Time = 2.567822e+00, lr = 3.125000e-03
+Epoch 70: Train Loss = 2.952523e-01, Val Loss = 2.898473e-01, Time = 2.409186e+00, lr = 1.562500e-03
+Epoch 80: Train Loss = 2.952963e-01, Val Loss = 2.875851e-01, Time = 2.736756e+00, lr = 7.812500e-04
+Epoch 90: Train Loss = 2.952875e-01, Val Loss = 2.888474e-01, Time = 2.362390e+00, lr = 7.812500e-04
+Epoch 100: Train Loss = 2.952387e-01, Val Loss = 2.866547e-01, Time = 2.328615e+00, lr = 3.906250e-04
+Epoch 110: Train Loss = 2.952165e-01, Val Loss = 2.904576e-01, Time = 2.366353e+00, lr = 1.953125e-04
+Epoch 120: Train Loss = 2.952463e-01, Val Loss = 2.913523e-01, Time = 2.617359e+00, lr = 9.765625e-05
+Epoch 130: Train Loss = 2.952569e-01, Val Loss = 2.891788e-01, Time = 2.577094e+00, lr = 4.882813e-05
+Epoch 140: Train Loss = 2.952238e-01, Val Loss = 2.889378e-01, Time = 2.540706e+00, lr = 4.882813e-05
+Epoch 150: Train Loss = 2.952629e-01, Val Loss = 2.903321e-01, Time = 2.337201e+00, lr = 2.441406e-05
+Epoch 160: Train Loss = 2.952566e-01, Val Loss = 2.901588e-01, Time = 2.370004e+00, lr = 1.220703e-05
+Epoch 170: Train Loss = 2.952702e-01, Val Loss = 2.849889e-01, Time = 2.620210e+00, lr = 6.103516e-06
+Epoch 180: Train Loss = 2.952905e-01, Val Loss = 2.914489e-01, Time = 2.808525e+00, lr = 6.103516e-06
+Epoch 190: Train Loss = 2.952597e-01, Val Loss = 2.879240e-01, Time = 2.361519e+00, lr = 3.051758e-06
+Epoch 199: Train Loss = 2.952336e-01, Val Loss = 2.871154e-01, Time = 2.455645e+00, lr = 1.525879e-06
+Fold 2 Best Val Loss: 2.849889e-01
+
+--- FOLD 3/10 ---
+[Seed] Deterministic mode enabled (may reduce speed).
+Epoch 0: Train Loss = 5.044976e-02, Val Loss = 2.712478e-02, Time = 2.393044e+00, lr = 1.000000e-01
+Epoch 1: Train Loss = 2.725616e-02, Val Loss = 2.820329e-02, Time = 2.545103e+00, lr = 1.000000e-01
+Epoch 2: Train Loss = 2.725506e-02, Val Loss = 2.756025e-02, Time = 2.505895e+00, lr = 1.000000e-01
+Epoch 3: Train Loss = 2.724522e-02, Val Loss = 2.796378e-02, Time = 2.348276e+00, lr = 1.000000e-01
+Epoch 4: Train Loss = 2.726268e-02, Val Loss = 2.758201e-02, Time = 2.551381e+00, lr = 1.000000e-01
+Epoch 5: Train Loss = 2.725389e-02, Val Loss = 2.737358e-02, Time = 2.675780e+00, lr = 1.000000e-01
+Epoch 10: Train Loss = 2.726641e-02, Val Loss = 2.809039e-02, Time = 2.635680e+00, lr = 1.000000e-01
+Epoch 20: Train Loss = 2.725395e-02, Val Loss = 2.816541e-02, Time = 2.894943e+00, lr = 5.000000e-02
+Epoch 30: Train Loss = 2.725112e-02, Val Loss = 2.752893e-02, Time = 2.379200e+00, lr = 2.500000e-02
+Epoch 40: Train Loss = 2.725372e-02, Val Loss = 2.698694e-02, Time = 2.511186e+00, lr = 1.250000e-02
+Epoch 50: Train Loss = 2.725060e-02, Val Loss = 2.791326e-02, Time = 2.474335e+00, lr = 6.250000e-03
+Epoch 60: Train Loss = 2.725787e-02, Val Loss = 2.815533e-02, Time = 2.613658e+00, lr = 6.250000e-03
+Epoch 70: Train Loss = 2.725131e-02, Val Loss = 2.764614e-02, Time = 2.641416e+00, lr = 3.125000e-03
+Epoch 80: Train Loss = 2.726078e-02, Val Loss = 2.839871e-02, Time = 2.565824e+00, lr = 1.562500e-03
+Epoch 90: Train Loss = 2.724373e-02, Val Loss = 2.786549e-02, Time = 2.689533e+00, lr = 7.812500e-04
+Epoch 100: Train Loss = 2.726628e-02, Val Loss = 2.827033e-02, Time = 2.745086e+00, lr = 3.906250e-04
+Epoch 110: Train Loss = 2.725509e-02, Val Loss = 2.824313e-02, Time = 2.541895e+00, lr = 1.953125e-04
+Epoch 120: Train Loss = 2.725941e-02, Val Loss = 2.807828e-02, Time = 2.774815e+00, lr = 1.953125e-04
+Epoch 130: Train Loss = 2.724970e-02, Val Loss = 2.770069e-02, Time = 2.599401e+00, lr = 9.765625e-05
+Epoch 140: Train Loss = 2.725847e-02, Val Loss = 2.681538e-02, Time = 2.333861e+00, lr = 4.882813e-05
+Epoch 150: Train Loss = 2.725262e-02, Val Loss = 2.775492e-02, Time = 2.375819e+00, lr = 2.441406e-05
+Epoch 160: Train Loss = 2.724544e-02, Val Loss = 2.714302e-02, Time = 2.349795e+00, lr = 1.220703e-05
+Epoch 170: Train Loss = 2.724141e-02, Val Loss = 2.851857e-02, Time = 2.371326e+00, lr = 6.103516e-06
+Epoch 180: Train Loss = 2.725132e-02, Val Loss = 2.828661e-02, Time = 2.352061e+00, lr = 3.051758e-06
+Epoch 190: Train Loss = 2.725167e-02, Val Loss = 2.796699e-02, Time = 2.349137e+00, lr = 1.525879e-06
+Epoch 199: Train Loss = 2.725477e-02, Val Loss = 2.727131e-02, Time = 2.387449e+00, lr = 7.629395e-07
+Fold 3 Best Val Loss: 2.628986e-02
+
+--- FOLD 4/10 ---
+[Seed] Deterministic mode enabled (may reduce speed).
+Epoch 0: Train Loss = 4.885252e-02, Val Loss = 2.693980e-02, Time = 2.360941e+00, lr = 1.000000e-01
+Epoch 1: Train Loss = 2.727978e-02, Val Loss = 2.797008e-02, Time = 2.354119e+00, lr = 1.000000e-01
+Epoch 2: Train Loss = 2.726192e-02, Val Loss = 2.776033e-02, Time = 2.328735e+00, lr = 1.000000e-01
+Epoch 3: Train Loss = 2.728400e-02, Val Loss = 2.757920e-02, Time = 2.347639e+00, lr = 1.000000e-01
+Epoch 4: Train Loss = 2.727799e-02, Val Loss = 2.854594e-02, Time = 2.339622e+00, lr = 1.000000e-01
+Epoch 5: Train Loss = 2.726495e-02, Val Loss = 2.855809e-02, Time = 2.378366e+00, lr = 1.000000e-01
+Epoch 10: Train Loss = 2.726035e-02, Val Loss = 2.715657e-02, Time = 2.338239e+00, lr = 1.000000e-01
+Epoch 20: Train Loss = 2.727079e-02, Val Loss = 2.725068e-02, Time = 2.563771e+00, lr = 5.000000e-02
+Epoch 30: Train Loss = 2.726401e-02, Val Loss = 2.788609e-02, Time = 2.364464e+00, lr = 5.000000e-02
+Epoch 40: Train Loss = 2.727621e-02, Val Loss = 2.738198e-02, Time = 2.585040e+00, lr = 2.500000e-02
+Epoch 50: Train Loss = 2.727445e-02, Val Loss = 2.797617e-02, Time = 2.337723e+00, lr = 1.250000e-02
+Epoch 60: Train Loss = 2.727824e-02, Val Loss = 2.781816e-02, Time = 2.403166e+00, lr = 6.250000e-03
+Epoch 70: Train Loss = 2.728257e-02, Val Loss = 2.740397e-02, Time = 2.343675e+00, lr = 3.125000e-03
+Epoch 80: Train Loss = 2.728838e-02, Val Loss = 2.719583e-02, Time = 2.354339e+00, lr = 1.562500e-03
+Epoch 90: Train Loss = 2.728606e-02, Val Loss = 2.778127e-02, Time = 2.342481e+00, lr = 7.812500e-04
+Epoch 100: Train Loss = 2.727020e-02, Val Loss = 2.700091e-02, Time = 2.407328e+00, lr = 3.906250e-04
+Epoch 110: Train Loss = 2.727514e-02, Val Loss = 2.739484e-02, Time = 2.373262e+00, lr = 1.953125e-04
+Epoch 120: Train Loss = 2.728073e-02, Val Loss = 2.744999e-02, Time = 2.237215e+00, lr = 1.953125e-04
+Epoch 130: Train Loss = 2.726648e-02, Val Loss = 2.740121e-02, Time = 2.371632e+00, lr = 9.765625e-05
+Epoch 140: Train Loss = 2.725922e-02, Val Loss = 2.722289e-02, Time = 2.377564e+00, lr = 4.882813e-05
+Epoch 150: Train Loss = 2.726732e-02, Val Loss = 2.713198e-02, Time = 2.132302e+00, lr = 2.441406e-05
+Epoch 160: Train Loss = 2.725405e-02, Val Loss = 2.756290e-02, Time = 2.222428e+00, lr = 1.220703e-05
+Epoch 170: Train Loss = 2.727294e-02, Val Loss = 2.782077e-02, Time = 2.185109e+00, lr = 6.103516e-06
+Epoch 180: Train Loss = 2.726968e-02, Val Loss = 2.678627e-02, Time = 2.150411e+00, lr = 3.051758e-06
+Epoch 190: Train Loss = 2.727353e-02, Val Loss = 2.799014e-02, Time = 2.150912e+00, lr = 1.525879e-06
+Epoch 199: Train Loss = 2.727546e-02, Val Loss = 2.781647e-02, Time = 2.151737e+00, lr = 7.629395e-07
+Fold 4 Best Val Loss: 2.620180e-02
+
+--- FOLD 5/10 ---
+[Seed] Deterministic mode enabled (may reduce speed).
+Epoch 0: Train Loss = 8.144766e-02, Val Loss = 2.733518e-02, Time = 2.145768e+00, lr = 1.000000e-01
+Epoch 1: Train Loss = 2.732721e-02, Val Loss = 2.706706e-02, Time = 2.176063e+00, lr = 1.000000e-01
+Epoch 2: Train Loss = 2.733490e-02, Val Loss = 2.723012e-02, Time = 2.142706e+00, lr = 1.000000e-01
+Epoch 3: Train Loss = 2.733324e-02, Val Loss = 2.635573e-02, Time = 2.146845e+00, lr = 1.000000e-01
+Epoch 4: Train Loss = 2.732949e-02, Val Loss = 2.680819e-02, Time = 2.133950e+00, lr = 1.000000e-01
+Epoch 5: Train Loss = 2.733510e-02, Val Loss = 2.615595e-02, Time = 2.166959e+00, lr = 1.000000e-01
+Epoch 10: Train Loss = 2.733608e-02, Val Loss = 2.658833e-02, Time = 2.195046e+00, lr = 1.000000e-01
+Epoch 20: Train Loss = 2.733921e-02, Val Loss = 2.762865e-02, Time = 2.177656e+00, lr = 1.000000e-01
+Epoch 30: Train Loss = 2.734627e-02, Val Loss = 2.741466e-02, Time = 2.154612e+00, lr = 5.000000e-02
+Epoch 40: Train Loss = 2.734401e-02, Val Loss = 2.709198e-02, Time = 2.150528e+00, lr = 2.500000e-02
+Epoch 50: Train Loss = 2.733932e-02, Val Loss = 2.713349e-02, Time = 2.149912e+00, lr = 1.250000e-02
+Epoch 60: Train Loss = 2.734322e-02, Val Loss = 2.686571e-02, Time = 2.147554e+00, lr = 6.250000e-03
+Epoch 70: Train Loss = 2.733635e-02, Val Loss = 2.636900e-02, Time = 2.138044e+00, lr = 6.250000e-03
+Epoch 80: Train Loss = 2.733004e-02, Val Loss = 2.618748e-02, Time = 2.223911e+00, lr = 3.125000e-03
+Epoch 90: Train Loss = 2.734232e-02, Val Loss = 2.682156e-02, Time = 2.141622e+00, lr = 1.562500e-03
+Epoch 100: Train Loss = 2.734101e-02, Val Loss = 2.801397e-02, Time = 2.156558e+00, lr = 7.812500e-04
+Epoch 110: Train Loss = 2.733415e-02, Val Loss = 2.833988e-02, Time = 2.111696e+00, lr = 3.906250e-04
+Epoch 120: Train Loss = 2.733978e-02, Val Loss = 2.730575e-02, Time = 2.216739e+00, lr = 3.906250e-04
+Epoch 130: Train Loss = 2.735531e-02, Val Loss = 2.679152e-02, Time = 2.221538e+00, lr = 1.953125e-04
+Epoch 140: Train Loss = 2.733984e-02, Val Loss = 2.657599e-02, Time = 2.221003e+00, lr = 9.765625e-05
+Epoch 150: Train Loss = 2.734059e-02, Val Loss = 2.711434e-02, Time = 2.267290e+00, lr = 4.882813e-05
+Epoch 160: Train Loss = 2.733481e-02, Val Loss = 2.714926e-02, Time = 2.240320e+00, lr = 2.441406e-05
+Epoch 170: Train Loss = 2.734495e-02, Val Loss = 2.682971e-02, Time = 2.615796e+00, lr = 1.220703e-05
+Epoch 180: Train Loss = 2.734015e-02, Val Loss = 2.667713e-02, Time = 2.133420e+00, lr = 6.103516e-06
+Epoch 190: Train Loss = 2.734971e-02, Val Loss = 2.686357e-02, Time = 2.404351e+00, lr = 3.051758e-06
+Epoch 199: Train Loss = 2.733646e-02, Val Loss = 2.727081e-02, Time = 2.123429e+00, lr = 1.525879e-06
+Fold 5 Best Val Loss: 2.578996e-02
+
+--- FOLD 6/10 ---
+[Seed] Deterministic mode enabled (may reduce speed).
+Epoch 0: Train Loss = 3.862804e-02, Val Loss = 2.584630e-02, Time = 2.122834e+00, lr = 1.000000e-01
+Epoch 1: Train Loss = 2.744062e-02, Val Loss = 2.710162e-02, Time = 2.124957e+00, lr = 1.000000e-01
+Epoch 2: Train Loss = 2.743908e-02, Val Loss = 2.619514e-02, Time = 2.158023e+00, lr = 1.000000e-01
+Epoch 3: Train Loss = 2.745352e-02, Val Loss = 2.646152e-02, Time = 2.138423e+00, lr = 1.000000e-01
+Epoch 4: Train Loss = 2.743511e-02, Val Loss = 2.606406e-02, Time = 2.156912e+00, lr = 1.000000e-01
+Epoch 5: Train Loss = 2.744565e-02, Val Loss = 2.509016e-02, Time = 2.117174e+00, lr = 1.000000e-01
+Epoch 10: Train Loss = 2.744934e-02, Val Loss = 2.635568e-02, Time = 2.145725e+00, lr = 1.000000e-01
+Epoch 20: Train Loss = 2.744220e-02, Val Loss = 2.668404e-02, Time = 2.185697e+00, lr = 5.000000e-02
+Epoch 30: Train Loss = 2.744023e-02, Val Loss = 2.585801e-02, Time = 2.174112e+00, lr = 2.500000e-02
+Epoch 40: Train Loss = 2.743778e-02, Val Loss = 2.647523e-02, Time = 2.177160e+00, lr = 2.500000e-02
+Epoch 50: Train Loss = 2.745498e-02, Val Loss = 2.577247e-02, Time = 2.190251e+00, lr = 1.250000e-02
+Epoch 60: Train Loss = 2.744190e-02, Val Loss = 2.661479e-02, Time = 2.173125e+00, lr = 6.250000e-03
+Epoch 70: Train Loss = 2.746011e-02, Val Loss = 2.693920e-02, Time = 2.144905e+00, lr = 3.125000e-03
+Epoch 80: Train Loss = 2.745513e-02, Val Loss = 2.565553e-02, Time = 2.187504e+00, lr = 1.562500e-03
+Epoch 90: Train Loss = 2.744883e-02, Val Loss = 2.701448e-02, Time = 2.197865e+00, lr = 7.812500e-04
+Epoch 100: Train Loss = 2.745147e-02, Val Loss = 2.610417e-02, Time = 2.184294e+00, lr = 3.906250e-04
+Epoch 110: Train Loss = 2.744332e-02, Val Loss = 2.615748e-02, Time = 2.163005e+00, lr = 1.953125e-04
+Epoch 120: Train Loss = 2.746351e-02, Val Loss = 2.644411e-02, Time = 2.150177e+00, lr = 9.765625e-05
+Epoch 130: Train Loss = 2.744406e-02, Val Loss = 2.593987e-02, Time = 2.168131e+00, lr = 9.765625e-05
+Epoch 140: Train Loss = 2.743200e-02, Val Loss = 2.628916e-02, Time = 2.251760e+00, lr = 4.882813e-05
+Epoch 150: Train Loss = 2.744581e-02, Val Loss = 2.564407e-02, Time = 2.152069e+00, lr = 2.441406e-05
+Epoch 160: Train Loss = 2.743887e-02, Val Loss = 2.644375e-02, Time = 2.122596e+00, lr = 1.220703e-05
+Epoch 170: Train Loss = 2.745839e-02, Val Loss = 2.608194e-02, Time = 2.145273e+00, lr = 6.103516e-06
+Epoch 180: Train Loss = 2.745465e-02, Val Loss = 2.622770e-02, Time = 2.152957e+00, lr = 3.051758e-06
+Epoch 190: Train Loss = 2.745581e-02, Val Loss = 2.623908e-02, Time = 2.168088e+00, lr = 1.525879e-06
+Epoch 199: Train Loss = 2.745778e-02, Val Loss = 2.692320e-02, Time = 2.146978e+00, lr = 7.629395e-07
+Fold 6 Best Val Loss: 2.488196e-02
+
+--- FOLD 7/10 ---
+[Seed] Deterministic mode enabled (may reduce speed).
+Epoch 0: Train Loss = 4.289491e-02, Val Loss = 2.667201e-02, Time = 2.373314e+00, lr = 1.000000e-01
+Epoch 1: Train Loss = 2.739998e-02, Val Loss = 2.704442e-02, Time = 2.403460e+00, lr = 1.000000e-01
+Epoch 2: Train Loss = 2.740016e-02, Val Loss = 2.637752e-02, Time = 2.137546e+00, lr = 1.000000e-01
+Epoch 3: Train Loss = 2.739109e-02, Val Loss = 2.684719e-02, Time = 2.140297e+00, lr = 1.000000e-01
+Epoch 4: Train Loss = 2.738411e-02, Val Loss = 2.678629e-02, Time = 2.144570e+00, lr = 1.000000e-01
+Epoch 5: Train Loss = 2.738821e-02, Val Loss = 2.595950e-02, Time = 2.466251e+00, lr = 1.000000e-01
+Epoch 10: Train Loss = 2.738310e-02, Val Loss = 2.641529e-02, Time = 2.360159e+00, lr = 1.000000e-01
+Epoch 20: Train Loss = 2.739654e-02, Val Loss = 2.685650e-02, Time = 2.403731e+00, lr = 5.000000e-02
+Epoch 30: Train Loss = 2.738271e-02, Val Loss = 2.638575e-02, Time = 2.359822e+00, lr = 5.000000e-02
+Epoch 40: Train Loss = 2.739002e-02, Val Loss = 2.718032e-02, Time = 2.305569e+00, lr = 2.500000e-02
+Epoch 50: Train Loss = 2.739437e-02, Val Loss = 2.670404e-02, Time = 2.320424e+00, lr = 1.250000e-02
+Epoch 60: Train Loss = 2.739619e-02, Val Loss = 2.679428e-02, Time = 1.857142e+00, lr = 6.250000e-03
+Epoch 70: Train Loss = 2.739609e-02, Val Loss = 2.619158e-02, Time = 1.832229e+00, lr = 6.250000e-03
+Epoch 80: Train Loss = 2.738800e-02, Val Loss = 2.651134e-02, Time = 2.004220e+00, lr = 3.125000e-03
+Epoch 90: Train Loss = 2.739078e-02, Val Loss = 2.708605e-02, Time = 1.682581e+00, lr = 3.125000e-03
+Epoch 100: Train Loss = 2.738621e-02, Val Loss = 2.589458e-02, Time = 1.785160e+00, lr = 1.562500e-03
+Epoch 110: Train Loss = 2.738878e-02, Val Loss = 2.651158e-02, Time = 1.698287e+00, lr = 7.812500e-04
+Epoch 120: Train Loss = 2.738826e-02, Val Loss = 2.621481e-02, Time = 1.487377e+00, lr = 3.906250e-04
+Epoch 130: Train Loss = 2.740714e-02, Val Loss = 2.644400e-02, Time = 1.715517e+00, lr = 1.953125e-04
+Epoch 140: Train Loss = 2.739115e-02, Val Loss = 2.546150e-02, Time = 1.595338e+00, lr = 9.765625e-05
+Epoch 150: Train Loss = 2.738072e-02, Val Loss = 2.562777e-02, Time = 1.548022e+00, lr = 4.882813e-05
+Epoch 160: Train Loss = 2.738425e-02, Val Loss = 2.646593e-02, Time = 1.557556e+00, lr = 2.441406e-05
+Epoch 170: Train Loss = 2.740108e-02, Val Loss = 2.643749e-02, Time = 1.602342e+00, lr = 1.220703e-05
+Epoch 180: Train Loss = 2.740343e-02, Val Loss = 2.634356e-02, Time = 1.569151e+00, lr = 6.103516e-06
+Epoch 190: Train Loss = 2.738538e-02, Val Loss = 2.690310e-02, Time = 1.575728e+00, lr = 3.051758e-06
+Epoch 199: Train Loss = 2.738072e-02, Val Loss = 2.617394e-02, Time = 1.583169e+00, lr = 3.051758e-06
+Fold 7 Best Val Loss: 2.527796e-02
+
+--- FOLD 8/10 ---
+[Seed] Deterministic mode enabled (may reduce speed).
+Epoch 0: Train Loss = 5.280681e-02, Val Loss = 2.623566e-02, Time = 1.481571e+00, lr = 1.000000e-01
+Epoch 1: Train Loss = 2.740852e-02, Val Loss = 2.647994e-02, Time = 1.646096e+00, lr = 1.000000e-01
+Epoch 2: Train Loss = 2.740013e-02, Val Loss = 2.579418e-02, Time = 1.878276e+00, lr = 1.000000e-01
+Epoch 3: Train Loss = 2.741251e-02, Val Loss = 2.679853e-02, Time = 1.553265e+00, lr = 1.000000e-01
+Epoch 4: Train Loss = 2.739508e-02, Val Loss = 2.713709e-02, Time = 1.615439e+00, lr = 1.000000e-01
+Epoch 5: Train Loss = 2.742237e-02, Val Loss = 2.722444e-02, Time = 1.618167e+00, lr = 1.000000e-01
+Epoch 10: Train Loss = 2.741142e-02, Val Loss = 2.655206e-02, Time = 1.615407e+00, lr = 1.000000e-01
+Epoch 20: Train Loss = 2.740671e-02, Val Loss = 2.694560e-02, Time = 1.688828e+00, lr = 5.000000e-02
+Epoch 30: Train Loss = 2.740364e-02, Val Loss = 2.650149e-02, Time = 1.555191e+00, lr = 2.500000e-02
+Epoch 40: Train Loss = 2.741798e-02, Val Loss = 2.525245e-02, Time = 1.573899e+00, lr = 2.500000e-02
+Epoch 50: Train Loss = 2.740534e-02, Val Loss = 2.618850e-02, Time = 1.544783e+00, lr = 1.250000e-02
+Epoch 60: Train Loss = 2.741085e-02, Val Loss = 2.568936e-02, Time = 1.572455e+00, lr = 6.250000e-03
+Epoch 70: Train Loss = 2.740973e-02, Val Loss = 2.684478e-02, Time = 1.640516e+00, lr = 3.125000e-03
+Epoch 80: Train Loss = 2.740892e-02, Val Loss = 2.638771e-02, Time = 1.659661e+00, lr = 1.562500e-03
+Epoch 90: Train Loss = 2.741078e-02, Val Loss = 2.620999e-02, Time = 1.663030e+00, lr = 7.812500e-04
+Epoch 100: Train Loss = 2.741109e-02, Val Loss = 2.562041e-02, Time = 1.530130e+00, lr = 3.906250e-04
+Epoch 110: Train Loss = 2.741378e-02, Val Loss = 2.642221e-02, Time = 1.649269e+00, lr = 1.953125e-04
+Epoch 120: Train Loss = 2.742149e-02, Val Loss = 2.647304e-02, Time = 1.396824e+00, lr = 9.765625e-05
+Epoch 130: Train Loss = 2.740888e-02, Val Loss = 2.528093e-02, Time = 1.458255e+00, lr = 4.882813e-05
+Epoch 140: Train Loss = 2.742150e-02, Val Loss = 2.676254e-02, Time = 1.519438e+00, lr = 2.441406e-05
+Epoch 150: Train Loss = 2.741483e-02, Val Loss = 2.684147e-02, Time = 1.682929e+00, lr = 2.441406e-05
+Epoch 160: Train Loss = 2.741389e-02, Val Loss = 2.572918e-02, Time = 1.654833e+00, lr = 1.220703e-05
+Epoch 170: Train Loss = 2.740050e-02, Val Loss = 2.626404e-02, Time = 1.658729e+00, lr = 6.103516e-06
+Epoch 180: Train Loss = 2.740143e-02, Val Loss = 2.670150e-02, Time = 1.717654e+00, lr = 3.051758e-06
+Epoch 190: Train Loss = 2.741030e-02, Val Loss = 2.654546e-02, Time = 1.436437e+00, lr = 1.525879e-06
+Epoch 199: Train Loss = 2.742338e-02, Val Loss = 2.633167e-02, Time = 1.496111e+00, lr = 7.629395e-07
+Fold 8 Best Val Loss: 2.506817e-02
+
+--- FOLD 9/10 ---
+[Seed] Deterministic mode enabled (may reduce speed).
+Epoch 0: Train Loss = 7.082180e-02, Val Loss = 2.740943e-02, Time = 1.619194e+00, lr = 1.000000e-01
+Epoch 1: Train Loss = 2.727365e-02, Val Loss = 2.807598e-02, Time = 1.599765e+00, lr = 1.000000e-01
+Epoch 2: Train Loss = 2.727920e-02, Val Loss = 2.901601e-02, Time = 1.659952e+00, lr = 1.000000e-01
+Epoch 3: Train Loss = 2.726805e-02, Val Loss = 2.812485e-02, Time = 1.636840e+00, lr = 1.000000e-01
+Epoch 4: Train Loss = 2.728251e-02, Val Loss = 2.815406e-02, Time = 1.497011e+00, lr = 1.000000e-01
+Epoch 5: Train Loss = 2.726728e-02, Val Loss = 2.807178e-02, Time = 1.653086e+00, lr = 1.000000e-01
+Epoch 10: Train Loss = 2.726720e-02, Val Loss = 2.768510e-02, Time = 1.579218e+00, lr = 1.000000e-01
+Epoch 20: Train Loss = 2.727791e-02, Val Loss = 2.759973e-02, Time = 1.646743e+00, lr = 1.000000e-01
+Epoch 30: Train Loss = 2.727214e-02, Val Loss = 2.689254e-02, Time = 1.670932e+00, lr = 5.000000e-02
+Epoch 40: Train Loss = 2.728027e-02, Val Loss = 2.770431e-02, Time = 1.599568e+00, lr = 5.000000e-02
+Epoch 50: Train Loss = 2.728300e-02, Val Loss = 2.845940e-02, Time = 1.767666e+00, lr = 5.000000e-02
+Epoch 60: Train Loss = 2.726453e-02, Val Loss = 2.828245e-02, Time = 1.585540e+00, lr = 2.500000e-02
+Epoch 70: Train Loss = 2.727496e-02, Val Loss = 2.778733e-02, Time = 1.463270e+00, lr = 1.250000e-02
+Epoch 80: Train Loss = 2.726969e-02, Val Loss = 2.775498e-02, Time = 1.613616e+00, lr = 6.250000e-03
+Epoch 90: Train Loss = 2.726545e-02, Val Loss = 2.696655e-02, Time = 1.502257e+00, lr = 6.250000e-03
+Epoch 100: Train Loss = 2.725969e-02, Val Loss = 2.784522e-02, Time = 1.463973e+00, lr = 3.125000e-03
+Epoch 110: Train Loss = 2.728551e-02, Val Loss = 2.743831e-02, Time = 1.572482e+00, lr = 1.562500e-03
+Epoch 120: Train Loss = 2.726997e-02, Val Loss = 2.816494e-02, Time = 1.584736e+00, lr = 1.562500e-03
+Epoch 130: Train Loss = 2.728166e-02, Val Loss = 2.770838e-02, Time = 1.590970e+00, lr = 7.812500e-04
+Epoch 140: Train Loss = 2.727336e-02, Val Loss = 2.809291e-02, Time = 1.598713e+00, lr = 3.906250e-04
+Epoch 150: Train Loss = 2.727565e-02, Val Loss = 2.805776e-02, Time = 1.604352e+00, lr = 1.953125e-04
+Epoch 160: Train Loss = 2.727346e-02, Val Loss = 2.775724e-02, Time = 1.505165e+00, lr = 9.765625e-05
+Epoch 170: Train Loss = 2.726524e-02, Val Loss = 2.773921e-02, Time = 1.664210e+00, lr = 4.882813e-05
+Epoch 180: Train Loss = 2.726940e-02, Val Loss = 2.693736e-02, Time = 1.570947e+00, lr = 4.882813e-05
+Epoch 190: Train Loss = 2.728023e-02, Val Loss = 2.715463e-02, Time = 1.643843e+00, lr = 2.441406e-05
+Epoch 199: Train Loss = 2.728144e-02, Val Loss = 2.757735e-02, Time = 1.657516e+00, lr = 1.220703e-05
+Fold 9 Best Val Loss: 2.622889e-02
+
+--- FOLD 10/10 ---
+[Seed] Deterministic mode enabled (may reduce speed).
+Epoch 0: Train Loss = 4.969678e-02, Val Loss = 2.773411e-02, Time = 1.613351e+00, lr = 1.000000e-01
+Epoch 1: Train Loss = 2.720472e-02, Val Loss = 2.746647e-02, Time = 1.585959e+00, lr = 1.000000e-01
+Epoch 2: Train Loss = 2.721708e-02, Val Loss = 2.860878e-02, Time = 1.550978e+00, lr = 1.000000e-01
+Epoch 3: Train Loss = 2.722240e-02, Val Loss = 2.741303e-02, Time = 1.498061e+00, lr = 1.000000e-01
+Epoch 4: Train Loss = 2.722951e-02, Val Loss = 2.871997e-02, Time = 1.556111e+00, lr = 1.000000e-01
+Epoch 5: Train Loss = 2.722331e-02, Val Loss = 2.801021e-02, Time = 1.580448e+00, lr = 1.000000e-01
+Epoch 10: Train Loss = 2.721107e-02, Val Loss = 2.828748e-02, Time = 1.933113e+00, lr = 1.000000e-01
+Epoch 20: Train Loss = 2.721163e-02, Val Loss = 2.803721e-02, Time = 1.610202e+00, lr = 5.000000e-02
+Epoch 30: Train Loss = 2.721434e-02, Val Loss = 2.826802e-02, Time = 1.573867e+00, lr = 2.500000e-02
+Epoch 40: Train Loss = 2.722752e-02, Val Loss = 2.803471e-02, Time = 1.680951e+00, lr = 1.250000e-02
+Epoch 50: Train Loss = 2.722385e-02, Val Loss = 2.779086e-02, Time = 1.885649e+00, lr = 6.250000e-03
+Epoch 60: Train Loss = 2.723611e-02, Val Loss = 2.890425e-02, Time = 1.656686e+00, lr = 6.250000e-03
+Epoch 70: Train Loss = 2.721351e-02, Val Loss = 2.796304e-02, Time = 1.623319e+00, lr = 3.125000e-03
+Epoch 80: Train Loss = 2.722412e-02, Val Loss = 2.837166e-02, Time = 1.594163e+00, lr = 1.562500e-03
+Epoch 90: Train Loss = 2.721662e-02, Val Loss = 2.861209e-02, Time = 1.510070e+00, lr = 7.812500e-04
+Epoch 100: Train Loss = 2.721960e-02, Val Loss = 2.825903e-02, Time = 1.538671e+00, lr = 3.906250e-04
+Epoch 110: Train Loss = 2.721232e-02, Val Loss = 2.856378e-02, Time = 1.514471e+00, lr = 1.953125e-04
+Epoch 120: Train Loss = 2.721347e-02, Val Loss = 2.884563e-02, Time = 1.589722e+00, lr = 9.765625e-05
+Epoch 130: Train Loss = 2.721827e-02, Val Loss = 2.874554e-02, Time = 1.544842e+00, lr = 9.765625e-05
+Epoch 140: Train Loss = 2.721939e-02, Val Loss = 2.822246e-02, Time = 1.603514e+00, lr = 4.882813e-05
+Epoch 150: Train Loss = 2.721263e-02, Val Loss = 2.785584e-02, Time = 1.606930e+00, lr = 2.441406e-05
+Epoch 160: Train Loss = 2.722123e-02, Val Loss = 2.841827e-02, Time = 1.570191e+00, lr = 1.220703e-05
+Epoch 170: Train Loss = 2.720883e-02, Val Loss = 2.800090e-02, Time = 1.602148e+00, lr = 6.103516e-06
+Epoch 180: Train Loss = 2.720518e-02, Val Loss = 2.870759e-02, Time = 1.761603e+00, lr = 3.051758e-06
+Epoch 190: Train Loss = 2.721048e-02, Val Loss = 2.819284e-02, Time = 1.515057e+00, lr = 1.525879e-06
+Epoch 199: Train Loss = 2.722334e-02, Val Loss = 2.846532e-02, Time = 1.773020e+00, lr = 7.629395e-07
+Fold 10 Best Val Loss: 2.676412e-02
+
+K-Fold Cross Validation Results:
+Average Best Validation Loss: 7.848387e-02
+Average Best Train Loss: 8.082890e-02

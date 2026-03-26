@@ -1,0 +1,23 @@
+[project]
+name = "ftnode"
+version = "0.1.0"
+description = "Forward Tracking Neural Ordinary Differential Equations."
+authors = [
+  { name = "Ike Griss Salas" },
+  { name = "Ethan King" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.0.0",
+    "torchode>=1.0.0",
+    "numpy>=1.24.0",
+    "scikit-learn",
+    "matplotlib",
+    "tqdm"
+]
+
+[tool.setuptools]
+packages = [
+    "ftnode",
+]

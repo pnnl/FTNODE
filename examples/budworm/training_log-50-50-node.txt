@@ -1,0 +1,65 @@
+[Seed] Deterministic mode enabled (may reduce speed).
+[Seed] Deterministic mode enabled.
+Calculating simulation parameters...
+Bifurcation points: 6.44569072482332, 9.93441120446710
+Generating simulation data...
+Total simulations to run: 2601
+Simulating control param 1/51...
+Simulating control param 6/51...
+Simulating control param 11/51...
+Simulating control param 16/51...
+Simulating control param 21/51...
+Simulating control param 26/51...
+Simulating control param 31/51...
+Simulating control param 36/51...
+Simulating control param 41/51...
+Simulating control param 46/51...
+Simulating control param 51/51...
+Simulation complete. Total samples: 2601
+Scaling data...
+Calculating derivatives...
+Converting to tensors...
+Starting 10-Fold Cross Validation...
+
+--- FOLD 1/10 ---
+[Seed] Deterministic mode enabled (may reduce speed).
+Epoch 0: Train Loss = 5.161931e-01, Val Loss = 4.496306e-01, Time = 9.690292e+00, lr = 1.000000e-01
+Epoch 1: Train Loss = 4.644852e-01, Val Loss = 4.469056e-01, Time = 9.353861e+00, lr = 1.000000e-01
+Epoch 2: Train Loss = 4.644930e-01, Val Loss = 4.496395e-01, Time = 8.655006e+00, lr = 1.000000e-01
+Epoch 3: Train Loss = 4.645145e-01, Val Loss = 4.435755e-01, Time = 8.664230e+00, lr = 1.000000e-01
+Epoch 4: Train Loss = 4.647326e-01, Val Loss = 4.534521e-01, Time = 9.089454e+00, lr = 1.000000e-01
+Epoch 5: Train Loss = 4.643983e-01, Val Loss = 4.571994e-01, Time = 9.468004e+00, lr = 1.000000e-01
+Epoch 10: Train Loss = 4.646572e-01, Val Loss = 4.467536e-01, Time = 8.255389e+00, lr = 1.000000e-01
+Epoch 20: Train Loss = 4.643936e-01, Val Loss = 4.592832e-01, Time = 8.497660e+00, lr = 1.000000e-01
+Epoch 30: Train Loss = 4.647564e-01, Val Loss = 4.675876e-01, Time = 9.049436e+00, lr = 5.000000e-02
+Epoch 40: Train Loss = 4.649241e-01, Val Loss = 4.563033e-01, Time = 8.835942e+00, lr = 2.500000e-02
+Epoch 50: Train Loss = 4.648613e-01, Val Loss = 4.563732e-01, Time = 8.531311e+00, lr = 2.500000e-02
+Epoch 60: Train Loss = 4.646700e-01, Val Loss = 4.341658e-01, Time = 9.584494e+00, lr = 1.250000e-02
+Epoch 70: Train Loss = 4.646536e-01, Val Loss = 4.634417e-01, Time = 9.485400e+00, lr = 1.250000e-02
+Epoch 80: Train Loss = 4.646200e-01, Val Loss = 4.605159e-01, Time = 8.774685e+00, lr = 6.250000e-03
+Epoch 90: Train Loss = 4.645558e-01, Val Loss = 4.457192e-01, Time = 9.102520e+00, lr = 3.125000e-03
+Epoch 100: Train Loss = 4.648928e-01, Val Loss = 4.586624e-01, Time = 1.009677e+01, lr = 1.562500e-03
+Epoch 110: Train Loss = 4.645640e-01, Val Loss = 4.506854e-01, Time = 9.480760e+00, lr = 7.812500e-04
+Epoch 120: Train Loss = 4.643931e-01, Val Loss = 4.588865e-01, Time = 9.786620e+00, lr = 3.906250e-04
+Epoch 130: Train Loss = 4.644844e-01, Val Loss = 4.637323e-01, Time = 9.280643e+00, lr = 3.906250e-04
+Epoch 140: Train Loss = 4.644933e-01, Val Loss = 4.426118e-01, Time = 9.091905e+00, lr = 1.953125e-04
+Epoch 150: Train Loss = 4.645745e-01, Val Loss = 4.626477e-01, Time = 8.348506e+00, lr = 9.765625e-05
+Epoch 160: Train Loss = 4.646028e-01, Val ftnode.451610e-01, Time = 8.326249e+00, lr = 4.882813e-05
+Epoch 170: Train Loss = 4.647012e-01, Val Loss = 4.705133e-01, Time = 8.985055e+00, lr = 2.441406e-05
+Epoch 180: Train Loss = 4.646202e-01, Val ftnode.468571e-01, Time = 8.483093e+00, lr = 1.220703e-05
+Epoch 190: Train Loss = 4.645462e-01, Val Loss = 4.467961e-01, Time = 8.422346e+00, lr = 6.103516e-06
+Epoch 199: Train Loss = 4.644754e-01, Val ftnode.472273e-01, Time = 8.032202e+00, lr = 6.103516e-06
+Fold 1 Best Val Loss: 4.305822e-01
+ftnode
+--- FOLD 2/10 ---
+[Seed] Deterministic mode enabled (may reduce speed).
+Traceback (most recent call last):
+  File "/Users/Malachite/Documents/github/stabnode-pnnl/examples/budworm/run_kfold-50-50-node.py", line 244, in <module>
+    loss.backward()
+  File "/Users/Malachite/Documents/github/stabnode-pnnl/.venv/lib/python3.10/site-packages/torch/_tensor.py", line 630, in backward
+    torch.autograd.backward(
+  File "/Users/Malachite/Documents/github/stabnode-pnnl/.venv/lib/python3.10/site-packages/torch/autograd/__init__.py", line 364, in backward
+    _engine_run_backward(
+  File "/Users/Malachite/Documents/github/stabnode-pnnl/.venv/lib/python3.10/site-packages/torch/autograd/graph.py", line 865, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn
