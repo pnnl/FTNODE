@@ -2,10 +2,20 @@
 
 # Modeling and Control of Asymptotically Stable Systems Using a Foward Tracking Neural ODE Approach (FTNODE)
 
-This repository contains the code to reproduce the examples from the paper: Modeling and feedback control of asymptotically stable nonlinear
-dynamical systems 
+This repository contains the code to reproduce the examples from the paper: 
+> "Data-driven discovery and control of multistable nonlinear systems and hysteresis via structured Neural ODEs" *arXiv preprint arXiv:2603.27024* (2026).
 
--add reference--
+```bibtex
+@misc{salas2026datadriven,
+  title         = {Data-driven discovery and control of multistable nonlinear systems and hysteresis via structured Neural ODEs},
+  author        = {Salas, Ike Griss and King, Ethan},
+  year          = {2026},
+  eprint        = {2603.27024},
+  archivePrefix = {arXiv},
+  primaryClass  = {eess.SY},
+  howpublished  = {\url{[https://arxiv.org/abs/2603.27024](https://arxiv.org/abs/2603.27024)}}
+}
+```
 
 ## Overview
 
