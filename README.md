@@ -72,7 +72,10 @@ pip install .
 ```
 
 ### Reproducing Results
-If you are looking to reproduce the results from `examples/`, you may use the frozen `requirements.txt` file. 
+If you are looking to reproduce the results from `examples/`, you may recreate the exact environment using either `pip` or `conda`.
+
+#### Option A: pip + venv
+Use the frozen `requirements.txt` file.
 
 ```bash
 # 1. Clone the repository and navigate into it
@@ -93,6 +96,27 @@ pip install -r requirements.txt
 # 4. Install the package locally in editable mode
 pip install -e .
 ```
+
+#### Option B: conda
+Use the pinned `environment.yaml`. This creates a Python 3.10.5 environment named `ftnode` and installs the package in editable mode (`-e .`) automatically.
+
+```bash
+# 1. Clone the repository and navigate into it
+git clone https://github.com/pnnl/FTNODE.git
+cd FTNODE
+
+# 2. Create the environment (run from the repo root so `-e .` resolves to this package)
+conda env create -f environment.yaml
+
+# 3. Activate it
+conda activate ftnode
+```
+
+> **Apple Silicon note:** `torch==2.10.0` publishes only an arm64 macOS wheel. If your conda/anaconda base is an Intel (osx-64) build, force an arm64 env so the torch pin resolves, then persist the subdir for later installs:
+> ```bash
+> CONDA_SUBDIR=osx-arm64 conda env create -f environment.yaml
+> conda env config vars set CONDA_SUBDIR=osx-arm64 -n ftnode
+> ```
 
 
 ## Usage
