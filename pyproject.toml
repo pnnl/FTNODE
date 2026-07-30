@@ -24,8 +24,77 @@ dependencies = [
 ]
 
 [tool.setuptools]
+# Note: `ftnode.ablation` is deliberately absent -- that package is not yet
+# committed. Add it back in the same commit that tracks ftnode/ablation/,
+# otherwise the build fails with "package directory does not exist".
 packages = [
     "ftnode",
     "ftnode.node",
-    "ftnode.ablation",
+]
+
+[dependency-groups]
+# Jupyter stack needed to run examples/*.ipynb, pinned to the reference `ftnode`
+# conda environment. Install with `uv sync --group notebooks`.
+notebooks = [
+    "ipykernel==7.1.0",
+    "ipywidgets==8.1.8",
+    "jupyter_client==8.8.0",
+    "jupyter_core==5.9.1",
+    "jupyterlab_widgets==3.0.16",
+    "widgetsnbextension==4.0.15",
+]
+
+[tool.uv]
+# Pin the resolution to the exact versions in the reference `ftnode` conda
+# environment (see environment.yaml) so `uv sync` reproduces it.
+constraint-dependencies = [
+    "torch==2.10.0",
+    "torchode==1.0.0",
+    "numpy==1.26.4",
+    "scipy==1.15.3",
+    "scikit-learn==1.7.2",
+    "matplotlib==3.10.8",
+    "tqdm==4.67.2",
+    "pyyaml==6.0.3",
+    # Transitive pins, kept in lockstep with requirements.txt.
+    "contourpy==1.3.2",
+    "cycler==0.12.1",
+    "filelock==3.20.3",
+    "fonttools==4.61.1",
+    "fsspec==2026.1.0",
+    "jinja2==3.1.6",
+    "joblib==1.5.3",
+    "kiwisolver==1.4.9",
+    "markupsafe==3.0.3",
+    "mpmath==1.3.0",
+    "networkx==3.4.2",
+    "packaging==26.0",
+    "pillow==12.1.0",
+    "pyparsing==3.3.2",
+    "python-dateutil==2.9.0.post0",
+    "six==1.17.0",
+    "sympy==1.14.0",
+    "threadpoolctl==3.6.0",
+    "typing-extensions==4.15.0",
+    # Jupyter/IPython transitives, so `--group notebooks` matches too.
+    "asttokens==3.0.1",
+    "debugpy==1.8.20",
+    "decorator==5.2.1",
+    "ipython==8.38.0",
+    "jedi==0.19.2",
+    "matplotlib-inline==0.2.1",
+    "parso==0.8.5",
+    "platformdirs==4.5.1",
+    "prompt-toolkit==3.0.52",
+    "pygments==2.19.2",
+    "tornado==6.5.4",
+    "traitlets==5.14.3",
+    "wcwidth==0.5.3",
+]
+# torch==2.10.0 publishes no macOS x86_64 wheel, so restrict the lock to the
+# platforms where the pin actually resolves (the same limitation Option B in the
+# README documents for conda).
+environments = [
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
 ]
