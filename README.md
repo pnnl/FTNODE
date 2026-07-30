@@ -68,13 +68,42 @@ git clone https://github.com/pnnl/FTNODE.git
 cd FTNODE
 
 # Install the package
+uv pip install .
+
+# ...or, with plain pip
 pip install .
 ```
 
 ### Reproducing Results
-If you are looking to reproduce the results from `examples/`, you may recreate the exact environment using either `pip` or `conda`.
+If you are looking to reproduce the results from `examples/`, you may recreate the exact environment. `uv` is the recommended path; `pip` and `conda` are also supported.
 
-#### Option A: pip + venv
+#### Option A: uv (recommended)
+Use the committed `uv.lock`. This is the fastest path and the only one with a true lockfile: `uv` reads `.python-version` (3.10.5), downloads that interpreter if you don't have it, resolves nothing at install time, and installs `ftnode` in editable mode automatically.
+
+```bash
+# 0. Install uv (once)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 1. Clone the repository and navigate into it
+git clone https://github.com/pnnl/FTNODE.git
+cd FTNODE
+
+# 2. Create the locked environment in ./.venv
+#    Drop --group notebooks if you don't need the Jupyter stack for examples/
+uv sync --group notebooks
+
+# 3. Run anything inside it without activating
+uv run python -c "import ftnode.node; print('ok')"
+
+# ...or activate the venv the usual way
+source .venv/bin/activate
+```
+
+This produces the same package versions as Option C. Unlike Option C it needs no `CONDA_SUBDIR` workaround: `uv` resolves per-platform, and the lock is restricted to the platforms where `torch==2.10.0` publishes wheels (macOS arm64 and Linux x86_64). macOS Intel is not supported at this pin, and `uv sync` will say so instead of failing deep in the install.
+
+To change a dependency, edit `pyproject.toml` and run `uv lock`, then commit the updated `uv.lock`. The exact versions of the reference environment are held in `[tool.uv] constraint-dependencies`; relax those pins if you want a newer stack.
+
+#### Option B: pip + venv
 Use the frozen `requirements.txt` file.
 
 ```bash
@@ -97,7 +126,7 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-#### Option B: conda
+#### Option C: conda
 Use the pinned `environment.yaml`. This creates a Python 3.10.5 environment named `ftnode` and installs the package in editable mode (`-e .`) automatically.
 
 ```bash
@@ -117,7 +146,6 @@ conda activate ftnode
 > CONDA_SUBDIR=osx-arm64 conda env create -f environment.yaml
 > conda env config vars set CONDA_SUBDIR=osx-arm64 -n ftnode
 > ```
-
 
 ## Usage
 
