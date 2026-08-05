@@ -2,6 +2,8 @@ from tqdm.auto import tqdm
 import torch
 import numpy as np
 import random
+import dataclasses
+import yaml
 
 def _load_loop_wrapper(show_progress:bool):
     if show_progress:
@@ -38,3 +40,45 @@ def set_global_seed(seed: int, deterministic: bool = True):
         torch.backends.cudnn.benchmark = True
         torch.use_deterministic_algorithms(False)
         print("[Seed] Non-deterministic (fast) mode enabled.")
+
+
+def save_config(cfg, path):
+    """Write a frozen-dataclass config to YAML.
+
+    The duffing work configures runs through dataclasses
+    (:class:`ftnode.systems.DuffingDataConfig`,
+    :class:`ftnode.latent.KappaBudget`, :class:`ftnode.train.TrainConfig`,
+    :class:`ftnode.control.ControlConfig`); this records exactly which one
+    produced a given checkpoint, since the checkpoints themselves are bare state
+    dicts that carry no settings.
+
+    Args:
+        cfg: Any dataclass instance.
+        path (str | pathlib.Path): Destination ``.yaml`` file.
+    """
+    if not dataclasses.is_dataclass(cfg):
+        raise TypeError(f"save_config expects a dataclass instance, got {type(cfg).__name__}")
+    with open(path, "w") as fh:
+        yaml.safe_dump(dataclasses.asdict(cfg), fh, sort_keys=False)
+
+
+def load_config(cls, path):
+    """Read a YAML file back into the dataclass ``cls``.
+
+    Unknown keys raise rather than being dropped, so a config written by an older
+    version fails loudly instead of silently falling back to defaults.
+
+    Args:
+        cls (type): The dataclass to construct.
+        path (str | pathlib.Path): Source ``.yaml`` file.
+
+    Returns:
+        An instance of ``cls``.
+    """
+    with open(path) as fh:
+        data = yaml.safe_load(fh) or {}
+    known = {f.name for f in dataclasses.fields(cls)}
+    unknown = set(data) - known
+    if unknown:
+        raise ValueError(f"{cls.__name__} has no fields {sorted(unknown)}")
+    return cls(**data)

@@ -30,9 +30,26 @@ dependencies = [
 packages = [
     "ftnode",
     "ftnode.node",
+    "ftnode.control",
+]
+
+[tool.pytest.ini_options]
+# `notebook` marks tests/test_notebook_equivalence.py, which execs the frozen
+# notebooks' definition cells and diffs them against the package.  It runs by
+# default: it is the only check that catches a change which is internally
+# consistent but no longer reproduces the committed results, so hiding it behind
+# an opt-in flag would defeat its purpose.  Skip it -- e.g. if you are
+# deliberately editing a frozen notebook -- with `pytest -m 'not notebook'`.
+markers = [
+    "notebook: bitwise equivalence against the frozen duffing notebooks",
 ]
 
 [dependency-groups]
+# Test stack.  Install with `uv sync --group dev`.
+dev = [
+    "pytest>=8",
+]
+
 # Jupyter stack needed to run examples/*.ipynb, pinned to the reference `ftnode`
 # conda environment. Install with `uv sync --group notebooks`.
 notebooks = [
@@ -42,6 +59,10 @@ notebooks = [
     "jupyter_core==5.9.1",
     "jupyterlab_widgets==3.0.16",
     "widgetsnbextension==4.0.15",
+    # Executes notebooks headlessly so examples/duffing/pkg_*.ipynb can be
+    # regenerated with stored outputs. Unpinned: tooling, not part of the
+    # reference numerical environment.
+    "nbclient",
 ]
 
 [tool.uv]

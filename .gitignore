@@ -208,3 +208,8 @@ __marimo__/
 
 .DS_Store
 **/.DS_Store
+
+# Checkpoints written by the pkg_* demo notebooks under examples/duffing/.
+# The frozen notebooks' own checkpoints (best-ctrl-*.pth, _proto-*.pth) are
+# tracked deliberately and are not matched by this pattern.
+examples/duffing/pkg-*.pth

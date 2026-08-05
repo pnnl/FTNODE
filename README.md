@@ -149,13 +149,57 @@ conda activate ftnode
 
 ## Usage
 
-Each example contains specific hyperparameters including:
-- Number of training epochs
-- Batch size
-- Initial learning rate
-- Model architecture specifications (layer widths, bounds)
+End-to-end training of a κ-bounded latent FT-NODE on the partially observed
+Duffing oscillator — generate data, build a model, train, evaluate:
 
-Refer to individual example scripts for detailed configuration.
+```python
+import torch
+
+from ftnode.systems import DuffingDataConfig, make_dataset
+from ftnode.latent import KappaBudget, LatentModelConfig, build_clamp
+from ftnode.train import TrainConfig, train_one, restore_best, rollout_y
+
+# 1. Data. Only q is measured; q_dot is never observed.
+train = make_dataset(DuffingDataConfig(n_traj=512, L=200, tau=8, seed=0))
+val   = make_dataset(DuffingDataConfig(n_traj=64,  L=600, tau=8, seed=1))
+
+# 2. Model. The budget caps cond(A) <= kappa_max by construction.
+budget = KappaBudget(sigma_min=0.1, kappa_max=25.0, skew_frac=0.6, m=4)
+cfg    = LatentModelConfig(m=budget.m, sigma_min=budget.sigma_min, tau=8)
+
+torch.manual_seed(0)
+model = build_clamp(cfg, budget)
+
+# 3. Train. Validation runs a longer horizon than training, so it measures
+#    extrapolation rather than fit.
+model, hist = train_one(
+    model, train, val,
+    TrainConfig(n_epochs=200, lr=3e-3, batch=64, lam_res=1e-2, L=200, L_eval=600),
+    ckpt_path="best-model.pth",
+)
+restore_best(model, hist)
+
+# 4. Evaluate: roll out from a held-out measurement window.
+with torch.no_grad():
+    y_hat, z = rollout_y(model, val.W, val.U, L=600, h=0.05)
+print(f"best val MSE {hist['best_val']:.3e} @ epoch {hist['best_epoch']}")
+```
+
+Swap `build_clamp` for `build_youla` (SVD-free κ bound), `build_unbounded`
+(no κ cap), or `build_latent_node` (unstructured baseline) — the rest is
+unchanged. `build_latent_node` takes no `budget`.
+
+Configs are frozen dataclasses and round-trip through YAML:
+
+```python
+from ftnode.utils import save_config, load_config
+
+save_config(cfg, "model.yaml")
+cfg = load_config(LatentModelConfig, "model.yaml")
+```
+
+For a runnable version with figures, see
+[`examples/duffing/pkg_kappa_variants.ipynb`](examples/duffing/pkg_kappa_variants.ipynb).
 
 ## Citation
 
