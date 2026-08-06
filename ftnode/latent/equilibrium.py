@@ -34,7 +34,7 @@ class BoundedTanhG(MLP):
     loadable into another.
     """
 
-    def __init__(self, m, q, hidden, depth, R_g, activation):
+    def __init__(self, m=4, q=1, hidden=64, depth=3, R_g=2.0, activation="silu"):
         super().__init__(m + q, m, hidden, depth, last_zero=True, activation=activation)
         self.m, self.q = m, q
         self.R_g = R_g
@@ -54,6 +54,9 @@ class BoundedTanhG(MLP):
 #:
 #: Every entry must accept ``(m, q, hidden, depth, R_g, activation)`` positionally
 #: plus any variant-specific keywords, and expose ``forward(z, u) -> (..., m)``.
+#: Give those six defaults, as :class:`BoundedTanhG` does and as the operators do:
+#: it costs nothing and makes the map constructible by hand for anyone building a
+#: model directly rather than through a config.
 #: That signature is the whole contract -- the model builds whichever map it is
 #: told to and never looks inside, so an entry is free to carry as much internal
 #: structure as its math needs.
