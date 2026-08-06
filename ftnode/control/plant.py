@@ -12,7 +12,14 @@ import pathlib
 
 import torch
 
-from ..latent import KappaBudget, LatentModelConfig, LatentSysID, build_clamp, spectral_clamp
+from ..latent import (
+    KappaBudget,
+    LatentModelConfig,
+    LatentSysID,
+    build_clamp,
+    migrate_flat_state_dict,
+    spectral_clamp,
+)
 
 __all__ = ["FrozenLatentPlant"]
 
@@ -55,6 +62,11 @@ class FrozenLatentPlant:
         notebooks trained with).  Loads with ``strict=True``: a key mismatch here
         means the architecture drifted from what produced the checkpoint, and
         should fail loudly rather than silently leave layers at their init.
+
+        The committed checkpoints predate the operator/equilibrium split, so the
+        state dict is re-keyed by
+        :func:`~ftnode.latent.migrate_flat_state_dict` first.  That is a no-op for
+        anything already in the current layout.
         """
         path = pathlib.Path(path)
         if not path.exists():
@@ -66,7 +78,8 @@ class FrozenLatentPlant:
         cfg = cfg or LatentModelConfig()
         budget = budget or KappaBudget()
         model = build_clamp(cfg, budget, clamp_fn=clamp_fn)
-        model.load_state_dict(torch.load(path, map_location=map_location), strict=True)
+        sd = migrate_flat_state_dict(torch.load(path, map_location=map_location), model)
+        model.load_state_dict(sd, strict=True)
         return cls(model.to(map_location))
 
     # ------------------------------------------------------------------ field

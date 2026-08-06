@@ -75,7 +75,7 @@ def test_rollout_shapes(model_cfg, budget):
 
     torch.manual_seed(0)
     model = build_clamp(model_cfg, budget)
-    w = torch.randn(5, model_cfg.tau)
+    w = torch.randn(5, model_cfg.encoder.tau)
     u = torch.zeros(5)
     ys, zs = rollout_y(model, w, u, L=7, h=0.05)
     assert ys.shape == (5, 8)
@@ -94,7 +94,7 @@ def test_builders_construct_the_encoder_first(model_cfg, budget):
     from ftnode.latent import Encoder, build_clamp, build_latent_node, build_unbounded, build_youla
 
     torch.manual_seed(0)
-    reference = Encoder(model_cfg.tau, model_cfg.m, model_cfg.enc_hidden, model_cfg.enc_depth)
+    reference = Encoder(model_cfg.encoder.tau, model_cfg.m, model_cfg.encoder.hidden, model_cfg.encoder.depth)
 
     for build in (
         lambda: build_clamp(model_cfg, budget),
@@ -105,6 +105,35 @@ def test_builders_construct_the_encoder_first(model_cfg, budget):
         torch.manual_seed(0)
         model = build()
         assert torch.equal(model.encoder.net.net[0].weight, reference.net.net[0].weight)
+
+
+def test_builders_construct_the_equilibrium_map_before_the_operator(model_cfg, budget):
+    """The same RNG-order trap as above, on the axis the funnels introduced.
+
+    Both halves draw from the global torch RNG, so the order fixes what
+    `torch.manual_seed(s)` produces. It matches the frozen notebooks, where
+    `g_net` was built in the base `__init__` ahead of the operator sub-networks.
+    Building the operator first raises no error and gives correct kappa values --
+    it silently stops reproducing every committed result.
+
+    Checked by building the equilibrium map alone against the same seed: it must
+    see the *first* draws, which is only true if the builder constructs it first.
+    """
+    from ftnode.latent import BoundedTanhG, build_clamp, build_unbounded, build_youla
+
+    g = model_cfg.equilibrium
+    torch.manual_seed(0)
+    _ = model_cfg._encoder()  # the builder's first draws (see the test above)
+    reference = BoundedTanhG(model_cfg.m, model_cfg.q, g.hidden, g.depth, g.R_g, model_cfg.activation)
+
+    for build in (
+        lambda: build_clamp(model_cfg, budget),
+        lambda: build_youla(model_cfg, budget),
+        lambda: build_unbounded(model_cfg, budget),
+    ):
+        torch.manual_seed(0)
+        equilibrium = build().dynamics.equilibrium
+        assert torch.equal(equilibrium.net[0].weight, reference.net[0].weight)
 
 
 def test_latent_node_exposes_no_A_or_g(model_cfg):
@@ -121,8 +150,8 @@ def test_train_one_smoke(tmp_path, model_cfg, budget):
 
     torch.manual_seed(0)
     model = build_clamp(model_cfg, budget)
-    train = make_dataset(DuffingDataConfig(n_traj=16, L=10, tau=model_cfg.tau, seed=0))
-    val = make_dataset(DuffingDataConfig(n_traj=4, L=20, tau=model_cfg.tau, seed=1))
+    train = make_dataset(DuffingDataConfig(n_traj=16, L=10, tau=model_cfg.encoder.tau, seed=0))
+    val = make_dataset(DuffingDataConfig(n_traj=4, L=20, tau=model_cfg.encoder.tau, seed=1))
     cfg = TrainConfig(n_epochs=2, batch=8, lam_res=1e-2, L=10, L_eval=20)
     ckpt = tmp_path / "smoke.pth"
     model, hist = train_one(model, train, val, cfg, ckpt_path=ckpt, verbose=False)
@@ -144,8 +173,8 @@ def test_train_one_defaults_ckpt_path(tmp_path, monkeypatch, model_cfg, budget):
     monkeypatch.chdir(tmp_path)
     torch.manual_seed(0)
     model = build_clamp(model_cfg, budget)
-    train = make_dataset(DuffingDataConfig(n_traj=8, L=6, tau=model_cfg.tau, seed=0))
-    val = make_dataset(DuffingDataConfig(n_traj=4, L=8, tau=model_cfg.tau, seed=1))
+    train = make_dataset(DuffingDataConfig(n_traj=8, L=6, tau=model_cfg.encoder.tau, seed=0))
+    val = make_dataset(DuffingDataConfig(n_traj=4, L=8, tau=model_cfg.encoder.tau, seed=1))
     cfg = TrainConfig(n_epochs=1, batch=8, L=6, L_eval=8)
     _, hist = train_one(model, train, val, cfg, label="fallback", verbose=False)
     assert hist["ckpt_path"] == "best-fallback.pth"
@@ -157,8 +186,8 @@ def test_residual_penalty_is_inert_for_latent_node(tmp_path, model_cfg):
 
     torch.manual_seed(0)
     model = build_latent_node(model_cfg)
-    train = make_dataset(DuffingDataConfig(n_traj=8, L=6, tau=model_cfg.tau, seed=0))
-    val = make_dataset(DuffingDataConfig(n_traj=4, L=8, tau=model_cfg.tau, seed=1))
+    train = make_dataset(DuffingDataConfig(n_traj=8, L=6, tau=model_cfg.encoder.tau, seed=0))
+    val = make_dataset(DuffingDataConfig(n_traj=4, L=8, tau=model_cfg.encoder.tau, seed=1))
     cfg = TrainConfig(n_epochs=1, batch=8, lam_res=1e-2, L=6, L_eval=8)
     _, hist = train_one(model, train, val, cfg, ckpt_path=tmp_path / "ln.pth", verbose=False)
     assert hist["res"][0] == 0.0

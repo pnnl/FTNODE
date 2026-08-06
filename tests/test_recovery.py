@@ -72,4 +72,4 @@ def test_g_image_respects_the_R_g_box(model_cfg, budget):
     U = (2 * torch.rand(512, generator=torch.Generator().manual_seed(1)) - 1) * 0.25
     G = g_image(dyn, Z, U)
     assert G.shape == (512, budget.m)
-    assert G.abs().max().item() <= model_cfg.R_g + 1e-5
+    assert G.abs().max().item() <= model_cfg.equilibrium.R_g + 1e-5

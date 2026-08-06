@@ -86,18 +86,29 @@ def test_unbounded_variant_really_is_unbounded(model_cfg, budget):
     torch.manual_seed(0)
     dyn = build_unbounded(model_cfg).dynamics
     with torch.no_grad():
-        for p in dyn.S_net.net[-1].parameters():
+        for p in dyn.operator.S_net.net[-1].parameters():
             p.add_(torch.randn_like(p) * 5.0)
     z = (2 * torch.rand(256, budget.m) - 1) * 2.0
     knorm, _ = skew_stats(dyn, z)
     assert knorm.max() > budget.c_K
 
 
-def test_youla_rejects_odd_latent_dim(budget):
-    from ftnode.latent import LatentFTNODEYoula
+def test_youla_rejects_odd_latent_dim():
+    """The 2x2 block structure of `Sigma` has no odd-dimensional form."""
+    from ftnode.latent import KappaBudget, YoulaOperator
 
     with pytest.raises(ValueError, match="even latent dim"):
-        LatentFTNODEYoula(l_bound=0.3, c_K=1.44, m=5)
+        YoulaOperator(m=5, budget=KappaBudget(m=5))
+
+
+def test_bounded_operators_require_a_budget():
+    """`c_P`/`c_K`/`l_bound` come from the budget; without one there is no cap to impose."""
+    from ftnode.latent import ClampOperator, UnboundedOperator, YoulaOperator
+
+    for cls in (ClampOperator, YoulaOperator):
+        with pytest.raises(ValueError, match="needs a KappaBudget"):
+            cls(m=4, budget=None)
+    UnboundedOperator(m=4, budget=None)  # caps nothing, so it does not need one
 
 
 def test_clamp_accepts_the_safe_clamp(model_cfg, budget, latent_box):

@@ -38,6 +38,7 @@ from ftnode.latent import (
     build_clamp,
     build_unbounded,
     build_youla,
+    migrate_flat_state_dict,
     spectral_clamp,
 )
 from ftnode.systems import DuffingDataConfig, make_dataset
@@ -179,16 +180,51 @@ def _pkg_build(name, cfg, budget, nb):
 def test_init_weights_are_bitwise_identical(
     name, _nb_path, nb_builder, cfg4, budget4, nb_svd, nb_youla
 ):
-    """Catches any change to layer construction order or RNG consumption."""
+    """Catches any change to layer construction order or RNG consumption.
+
+    The notebooks predate the operator/equilibrium split, so their state dicts are
+    flat.  Rather than duplicate the key mapping here, this routes them through the
+    package's own `migrate_flat_state_dict` -- which means a wrong shim fails this
+    test too, not just checkpoint loading.
+
+    Migrating keys does not blunt the check: the comparison that has teeth is
+    tensor-by-tensor equality, and construction order changes *values*, not names.
+    Key stability is asserted separately, in
+    `test_state_dict_layout_is_stable`.
+    """
     nb = nb_svd if _nb_path is NB_SVD else nb_youla
     torch.manual_seed(0)
-    pkg = _pkg_build(name, cfg4, budget4, nb).state_dict()
+    pkg_model = _pkg_build(name, cfg4, budget4, nb)
+    pkg = pkg_model.state_dict()
     torch.manual_seed(0)
-    ref = nb[nb_builder]().state_dict()
+    ref = migrate_flat_state_dict(nb[nb_builder]().state_dict(), pkg_model)
 
     assert sorted(pkg) == sorted(ref), f"{name}: state-dict keys diverged"
+    assert len(ref) == len(pkg) > 0
     for k in ref:
         assert torch.equal(pkg[k], ref[k]), f"{name}: {k} differs"
+
+
+@pytest.mark.parametrize("name,_nb_path,nb_builder", VARIANTS)
+def test_state_dict_layout_is_stable(name, _nb_path, nb_builder, cfg4, budget4, nb_svd, nb_youla):
+    """The key set itself, pinned -- the half of the old assertion migration removes.
+
+    Every parameter must sit under exactly one of the two funnels, and the
+    notebooks' flat names must all be reachable.  Guards against a future split
+    quietly relocating weights, which `load_state_dict(strict=True)` would only
+    catch where a checkpoint happens to exist.
+    """
+    nb = nb_svd if _nb_path is NB_SVD else nb_youla
+    torch.manual_seed(0)
+    dyn_keys = [k for k in _pkg_build(name, cfg4, budget4, nb).state_dict() if k.startswith("dynamics.")]
+
+    assert dyn_keys, f"{name}: no dynamics entries at all"
+    for k in dyn_keys:
+        assert k.startswith(("dynamics.operator.", "dynamics.equilibrium.")), (
+            f"{name}: {k} sits outside both funnels"
+        )
+    assert any(k.startswith("dynamics.operator.") for k in dyn_keys)
+    assert any(k.startswith("dynamics.equilibrium.") for k in dyn_keys)
 
 
 @pytest.mark.parametrize("name,_nb_path,nb_builder", VARIANTS)

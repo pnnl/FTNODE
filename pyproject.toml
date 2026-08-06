@@ -30,6 +30,7 @@ dependencies = [
 packages = [
     "ftnode",
     "ftnode.node",
+    "ftnode.latent",
     "ftnode.control",
 ]
 
