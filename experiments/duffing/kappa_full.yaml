@@ -1,0 +1,51 @@
+# The frozen kappa-variant comparison at paper settings.
+#
+# 4 variants x 10 seeds x 200 epochs on 512 trajectories. This takes HOURS on CPU
+# -- run it detached, and shard it if you have the cores:
+#
+#   nohup uv run ftnode-train experiments/duffing/kappa_full.yaml > runs/full.log 2>&1 &
+#
+#   # or fan out; each shard is bitwise identical to its slice of the full run
+#   ftnode-train experiments/duffing/kappa_full.yaml --only l-ft-k-svd-clamp --seeds 0-4
+#   ftnode-train experiments/duffing/kappa_full.yaml --only l-ft-k-svd-clamp --seeds 5-9
+#
+# Re-running the same command with --skip-existing resumes at (variant, seed)
+# granularity after a killed process.
+
+name: kappa_full
+out: runs/kappa_full
+
+budget:
+  sigma_min: 0.1
+  kappa_max: 25.0
+  skew_frac: 0.6
+  m: 4
+
+model:
+  m: 4
+  q: 1
+  activation: silu
+  encoder:     {hidden: 64, depth: 2, z_scale: 2.0, tau: 8}
+  operator:    {hidden: 64, depth: 3, sigma_min: 0.1}
+  equilibrium: {hidden: 64, depth: 3, R_g: 2.0}
+
+train:
+  n_epochs: 200
+  lr: 3.0e-3
+  batch: 64
+  clip: 1.0
+  lam_res: 1.0e-2
+  L: 200
+  L_eval: 600
+  h: 0.05
+
+data_train: {n_traj: 512, L: 200, tau: 8, seed: 0}
+data_val:   {n_traj: 64,  L: 600, tau: 8, seed: 1}
+
+variants:
+  - l-n
+  - l-ft-unbounded
+  - l-ft-k-svd-clamp
+  - l-ft-k-youla
+
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]

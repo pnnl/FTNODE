@@ -1,0 +1,51 @@
+# Fast smoke run of the kappa-variant comparison -- ~5 minutes on a laptop CPU.
+#
+# This is the QUICK preset from examples/duffing/pkg_kappa_variants.ipynb. It is a
+# shakedown of the pipeline, NOT a result: at 15 epochs the models have not learned
+# even the observed coordinate. Use kappa_full.yaml for anything quotable.
+#
+#   uv run ftnode-train experiments/duffing/kappa_quick.yaml
+
+name: kappa_quick
+out: runs/kappa_quick
+
+budget:
+  sigma_min: 0.1
+  kappa_max: 25.0
+  skew_frac: 0.6
+  m: 4
+
+# Shared architecture. `operator.kind` and `equilibrium.kind` are placeholders --
+# the `variants` list below decides those two axes per model. Everything else here
+# is held constant across variants so the comparison isolates structure.
+model:
+  m: 4
+  q: 1
+  activation: silu
+  encoder:     {hidden: 64, depth: 2, z_scale: 2.0, tau: 8}
+  operator:    {hidden: 64, depth: 3, sigma_min: 0.1}
+  equilibrium: {hidden: 64, depth: 3, R_g: 2.0}
+
+train:
+  n_epochs: 15
+  lr: 3.0e-3
+  batch: 64
+  clip: 1.0
+  lam_res: 1.0e-2      # inert for l-n, which has no g to regularize toward
+  L: 100
+  L_eval: 300
+  h: 0.05
+
+# tau must match model.encoder.tau; L must match train.L / train.L_eval.
+# Mismatches are rejected when the spec is loaded rather than failing during training.
+data_train: {n_traj: 128, L: 100, tau: 8, seed: 0}
+data_val:   {n_traj: 32,  L: 300, tau: 8, seed: 1}
+
+# Either a registry slug, or an explicit {operator: ..., equilibrium: ...} pair.
+variants:
+  - l-n
+  - l-ft-unbounded
+  - l-ft-k-svd-clamp
+  - l-ft-k-youla
+
+seeds: [0, 1]

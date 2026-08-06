@@ -32,7 +32,12 @@ packages = [
     "ftnode.node",
     "ftnode.latent",
     "ftnode.control",
+    "ftnode.experiments",
 ]
+
+[project.scripts]
+# Headless training: `uv run ftnode-train experiments/duffing/kappa_quick.yaml`.
+ftnode-train = "ftnode.experiments.cli:main"
 
 [tool.pytest.ini_options]
 # `notebook` marks tests/test_notebook_equivalence.py, which execs the frozen

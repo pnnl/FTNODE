@@ -213,3 +213,18 @@ __marimo__/
 # The frozen notebooks' own checkpoints (best-ctrl-*.pth, _proto-*.pth) are
 # tracked deliberately and are not matched by this pattern.
 examples/duffing/pkg-*.pth
+
+# misc
+todo
+commit.txt
+markdown/
+# Training run artifacts (checkpoints, histories, cached rollouts).  The
+# experiment files under experiments/ ARE tracked -- they are small and are the
+# provenance of every figure; the runs they produce are not.
+runs/
+
+# Artifacts the README's Usage snippets write into whatever directory you run
+# them from. Scoped to the repo root so committed example checkpoints under
+# examples/ are untouched.
+/best-model.pth
+/model.yaml
