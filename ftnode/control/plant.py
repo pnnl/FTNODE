@@ -1,10 +1,10 @@
 """The frozen identified plant the control stage designs against.
 
-In ``examples/duffing/_proto_ctrl.py`` the identified model is a module-level
-``idm`` that is **loaded from disk at import time**, and every control function
-closes over it.  That makes ``import`` do I/O, pins the working directory, and
-makes it impossible to hold two models at once.  :class:`FrozenLatentPlant`
-replaces that global with an explicit object.
+The earlier prototype held the identified model as a module-level ``idm`` and
+**loaded it from disk at import time**, and every control function closed over
+it.  That makes ``import`` do I/O, pins the working directory, and makes it
+impossible to hold two models at once.  :class:`FrozenLatentPlant` replaces that
+global with an explicit object.
 """
 from __future__ import annotations
 

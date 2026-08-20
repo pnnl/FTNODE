@@ -136,9 +136,8 @@ def migrate_flat_state_dict(sd, model):
 
     Every committed checkpoint under ``examples/duffing/`` predates the split, so
     this runs on load.  The ``.pth`` files are deliberately **not** rewritten in
-    place: ``duffing_learned_splitting_control.ipynb`` is frozen and loads
-    ``best-ctrl-id-svdclamp-seed0.pth`` with its own inline *flat* class
-    definitions, so rewriting the binary would silently break it.
+    place.  They are frozen, committed artifacts, so a rewrite would change the
+    committed bytes.  The shim re-keys them on load instead.
 
     The routing is derived from ``model`` rather than from a hardcoded per-variant
     name list.  Those lists are exactly what gets missed -- ``W_net``/``b_net``

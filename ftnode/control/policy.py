@@ -6,9 +6,9 @@ the plant is currently heading toward* moves onto the target.  Because ``g_psi``
 is a gauge choice rather than a property of the plant, redesigning ``psi``
 reshapes this cost landscape without touching the dynamics.
 
-Every function here takes the frozen plant explicitly.  In
-``examples/duffing/_proto_ctrl.py`` they close over a module-global ``idm``,
-``F_theta``, ``m``, ``Z_SCALE``, ``h_dt``, ``device`` and ``u_range``.
+Every function here takes the frozen plant explicitly.  The earlier prototype
+instead closed over module-global ``idm``, ``F_theta``, ``m``, ``Z_SCALE``,
+``h_dt``, ``device`` and ``u_range``.
 """
 from __future__ import annotations
 

@@ -95,9 +95,9 @@ def train_one(
     model = model.to(device)
     train = train.to(device)
     val = val.to(device)
-    # Keep the notebooks' fallback.  examples/duffing/_proto_id.py dropped this line
-    # while leaving ckpt_path=None in the signature, so the first improving epoch
-    # reached torch.save(state_dict, None).
+    # Keep this fallback.  An earlier prototype dropped it while leaving
+    # ckpt_path=None in the signature, so the first improving epoch reached
+    # torch.save(state_dict, None).
     if ckpt_path is None:
         ckpt_path = f"best-{label}.pth"
 
