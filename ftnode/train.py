@@ -103,6 +103,13 @@ def train_one(
 
     opt = torch.optim.Adam(model.parameters(), lr=cfg.lr)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=cfg.n_epochs)
+    # Submodules whose parameters live in a constraint set they must be projected back
+    # onto after every step -- currently the spectrally capped equilibrium map
+    # (ftnode.latent.GradPotentialG).  Collected by duck-typing over model.modules()
+    # rather than by reaching for model.dynamics.equilibrium, so the operator and the
+    # equilibrium map stay peers and either axis can use the hook.  Empty for every
+    # model that predates this, which is what keeps the loop bitwise unchanged for them.
+    projectors = [mod for mod in model.modules() if callable(getattr(mod, "project_", None))]
     hist = {
         "train": [],
         "val_extrap": [],
@@ -142,6 +149,10 @@ def train_one(
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.clip)
             opt.step()
+            # After the step, not before: projecting first would just be undone by it.
+            # Checkpointing happens later in the epoch, so every saved state is in-set.
+            for mod in projectors:
+                mod.project_()
 
             ep_losses.append(loss.item())
             ep_res.append(res_pen.item())
