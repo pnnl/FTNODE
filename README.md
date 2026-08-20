@@ -214,14 +214,18 @@ a different model is just a different pair. No config plumbing involved:
 from ftnode.latent import UnboundedOperator, YoulaOperator
 
 # SVD-free kappa bound, same equilibrium map.
-youla = LatentSysID(Encoder(tau=8, m=4),
-                    LatentFTNODE(YoulaOperator(m=4, budget=budget), BoundedTanhG(m=4)),
-                    LinearDecoder(m=4))
+youla = LatentSysID(
+  Encoder(tau=8, m=4),
+  LatentFTNODE(YoulaOperator(m=4, budget=budget), BoundedTanhG(m=4)),
+  LinearDecoder(m=4)
+)
 
 # No kappa cap at all -- the baseline the bounded operators are measured against.
-free = LatentSysID(Encoder(tau=8, m=4),
-                   LatentFTNODE(UnboundedOperator(m=4), BoundedTanhG(m=4)),
-                   LinearDecoder(m=4))
+free = LatentSysID(
+  Encoder(tau=8, m=4),
+  LatentFTNODE(UnboundedOperator(m=4), BoundedTanhG(m=4)),
+  LinearDecoder(m=4)
+)
 ```
 
 Adding a variant on either axis is one module plus one entry in the corresponding
@@ -266,6 +270,65 @@ shortcuts; `build_latent_node` is the unstructured baseline and takes no `budget
 
 For a runnable version with figures and every diagnostic, see
 [`examples/duffing/pkg_kappa_variants.ipynb`](examples/duffing/pkg_kappa_variants.ipynb).
+
+## Training from the command line
+
+A multi-seed comparison at paper settings takes hours and does not belong in a
+notebook kernel. `ftnode-train` runs one from a YAML file, so it can be detached —
+and a notebook then loads the finished run and plots it in seconds.
+
+```bash
+mkdir -p runs                              # the log redirect below needs it to exist
+uv run ftnode-train experiments/duffing/kappa_quick.yaml          # ~5 min
+
+nohup uv run ftnode-train experiments/duffing/kappa_full.yaml \
+      > runs/kappa_full.log 2>&1 &         # hours; detach and walk away
+tail -f runs/kappa_full.log
+```
+
+An experiment file names the shared configs, the variants and the seeds. A variant
+is a **pair of registry keys** — one operator, one equilibrium map — so a newly
+written `g` is sweepable against every operator without any code change:
+
+```yaml
+variants:
+  - l-ft-k-svd-clamp                          # a named entry
+  - {operator: youla, equilibrium: sym_jac}   # or an explicit pair
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+```
+
+Useful flags:
+
+| flag | what it does |
+|---|---|
+| `--skip-existing` | resume after a kill; re-runs nothing already finished |
+| `--only SLUG --seeds 0-4` | train one shard; repeat in another shell to parallelize |
+| `--dry-run` | print the resolved job list and exit |
+| `--no-rollouts` | skip caching validation rollouts |
+| `ftnode-train show runs/NAME` | summarize a finished run |
+
+Sharding is safe to fan out across tmux panes pointed at the same output
+directory: each `(variant, seed)` is reseeded immediately before its model is
+built, so a shard produces **bitwise the same checkpoints** as the corresponding
+slice of one long run.
+
+Then, in a notebook:
+
+```python
+from ftnode.experiments import load_run
+
+run = load_run("runs/kappa_full")
+models    = run.models(device)      # rebuilt from the config stored in the run
+histories = run.histories           # per-epoch train / val / zmax / res
+rollouts  = run.rollouts()          # cached validation rollouts, or None
+```
+
+A run directory is self-describing — it stores a resolved snapshot of every
+config, not a pointer at the experiment file, because the checkpoints are bare
+state dicts that cannot be rebuilt without it.
+
+[`examples/duffing/pkg_kappa_analysis.ipynb`](examples/duffing/pkg_kappa_analysis.ipynb)
+is a worked example: same figures as the tutorial notebook, no training.
 
 ## Citation
 
