@@ -58,7 +58,8 @@ from .config import (
     build_unbounded,
     build_youla,
 )
-from .equilibrium import G_KINDS, BoundedTanhG, resolve_g
+from .equilibrium import G_KINDS, BoundedTanhG, GradPotentialG, resolve_g
+from .feasibility import FeasibilityResult, fit_potential
 from .model import (
     LatentFTNODE,
     LatentNODE,
@@ -66,11 +67,13 @@ from .model import (
     migrate_flat_state_dict,
 )
 from .nets import (
+    ACTIVATION_LIPSCHITZ,
     ACTIVATIONS,
     MLP,
     Encoder,
     LinearDecoder,
     is_lipschitz_1,
+    lipschitz_bound,
     resolve_activation,
 )
 from .operator import (
@@ -88,8 +91,10 @@ from .operator import (
 __all__ = [
     # nets
     "ACTIVATIONS",
+    "ACTIVATION_LIPSCHITZ",
     "resolve_activation",
     "is_lipschitz_1",
+    "lipschitz_bound",
     "MLP",
     "Encoder",
     "LinearDecoder",
@@ -105,8 +110,11 @@ __all__ = [
     "resolve_operator",
     # equilibrium axis
     "BoundedTanhG",
+    "GradPotentialG",
     "G_KINDS",
     "resolve_g",
+    "FeasibilityResult",
+    "fit_potential",
     # models
     "LatentSysID",
     "LatentFTNODE",

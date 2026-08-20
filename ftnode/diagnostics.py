@@ -21,6 +21,7 @@ __all__ = [
     "pca_2d",
     "linear_recovery_r2",
     "g_image",
+    "jg_stats",
     "empirical_lipschitz",
 ]
 
@@ -168,7 +169,45 @@ def g_image(dyn, Z, U):
 
     Thin wrapper, but it names the thing being measured: decoding this and
     comparing against the plant's true equilibrium branches is what shows whether
-    the learned ``g`` found the actual pitchfork, and ``|g|_inf <= R_g`` is the
-    box bound the ``tanh`` imposes by construction.
+    the learned ``g`` found the actual pitchfork.
+
+    **The bound to check against is the map's, not a universal one.**
+    :class:`~ftnode.latent.BoundedTanhG` gives ``|g|_inf <= R_g`` -- a box, imposed by its
+    ``tanh``.  :class:`~ftnode.latent.GradPotentialG` gives ``||g||_2 <= g_bound`` -- a
+    ball, imposed by spectral caps on its potential's weights.  Read the bound off the
+    module rather than assuming either.
     """
     return dyn.g(Z, U)
+
+
+def jg_stats(dyn, Z, U, chunk=4096):
+    """Per-sample ``(skew fraction, lambda_max(sym J_g))`` of the equilibrium map's Jacobian.
+
+    Two numbers that decide whether a symmetric-``J_g`` map is doing what it claims:
+
+    * ``||skew J_g||_F / ||J_g||_F`` -- zero by construction for a gradient map, and the
+      check that it really is a gradient.  For reference, an *unstructured* ``m x m``
+      Jacobian sits at ``sqrt((m-1)/2m)`` = 0.612 at ``m=4``, which is where the
+      ``tanh_mlp`` maps measure; the statistic is only meaningful against that null.
+    * ``lambda_max(sym J_g)`` -- exceeds 1 exactly at saddles of the potential, so it is
+      how you confirm multistability survived a bound on ``g``.  Never constrain it below
+      1: that would make ``V`` strictly convex and delete the pitchfork.
+
+    Not ``@torch.no_grad()``: the Jacobian is taken with ``torch.func``, which needs to
+    differentiate.  Results are detached.
+    """
+    from torch.func import jacrev, vmap
+
+    def g_single(zi, ui):
+        return dyn.g(zi.unsqueeze(0), ui.reshape(1, -1)).squeeze(0)
+
+    fracs, lams = [], []
+    U2 = U.unsqueeze(-1) if U.dim() == Z.dim() - 1 else U
+    for i in range(0, Z.shape[0], chunk):
+        J = vmap(jacrev(g_single, argnums=0))(Z[i : i + chunk], U2[i : i + chunk]).detach()
+        skew = 0.5 * (J - J.transpose(-1, -2))
+        denom = J.flatten(1).norm(dim=1).clamp_min(1e-12)
+        fracs.append((skew.flatten(1).norm(dim=1) / denom).cpu().numpy())
+        sym = 0.5 * (J + J.transpose(-1, -2))
+        lams.append(torch.linalg.eigvalsh(sym)[:, -1].cpu().numpy())
+    return np.concatenate(fracs), np.concatenate(lams)

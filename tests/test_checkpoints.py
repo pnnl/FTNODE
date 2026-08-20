@@ -28,10 +28,9 @@ pytestmark = pytest.mark.skipif(
 def test_id_checkpoint_loads_strictly(model_cfg, budget):
     """The committed checkpoint predates the operator/equilibrium split.
 
-    It is deliberately not rewritten -- `duffing_learned_splitting_control.ipynb`
-    is frozen and loads this same file with its own inline *flat* class
-    definitions, so rewriting the binary would silently break it. The shim
-    re-keys it on the way in instead.
+    It is deliberately not rewritten -- it is a frozen, committed artifact, so a
+    rewrite would change the committed bytes. The shim re-keys it on the way in
+    instead.
     """
     model = build_clamp(model_cfg, budget)
     sd = torch.load(ID_CKPT, map_location="cpu")

@@ -4,6 +4,7 @@ import pytest
 import torch
 
 from ftnode.diagnostics import g_image, linear_recovery_r2, pca_2d
+from ftnode.latent import G_KINDS
 
 
 @pytest.fixture
@@ -62,14 +63,29 @@ def test_linear_recovery_r2_is_held_out(split):
     assert linear_recovery_r2(Z, target, fit_i, ev_i) < 0.99
 
 
-def test_g_image_respects_the_R_g_box(model_cfg, budget):
-    """`g = R_g * tanh(...)` bounds the equilibrium map by construction."""
-    from ftnode.latent import build_clamp
+@pytest.mark.parametrize("g_kind", sorted(G_KINDS))
+def test_g_image_respects_its_declared_bound(model_cfg, budget, g_kind):
+    """Every equilibrium map bounds its image -- but each declares its OWN bound.
 
+    `tanh_mlp` gives an l-infinity box, `|g|_inf <= R_g`, from its `tanh`.
+    `grad_potential` gives an l2 ball, `||g||_2 <= g_bound`, from spectral caps on the
+    potential's weights.  Asserting one shape universally is what this test used to do,
+    and it would silently pass for a map whose bound it was not checking.
+    """
+    from dataclasses import replace
+
+    from ftnode.latent import build_latent_ftnode
+
+    cfg = replace(model_cfg, equilibrium=replace(model_cfg.equilibrium, kind=g_kind))
     torch.manual_seed(0)
-    dyn = build_clamp(model_cfg, budget).dynamics
+    dyn = build_latent_ftnode(cfg, budget).dynamics
     Z = (2 * torch.rand(512, budget.m, generator=torch.Generator().manual_seed(0)) - 1) * 2.0
     U = (2 * torch.rand(512, generator=torch.Generator().manual_seed(1)) - 1) * 0.25
     G = g_image(dyn, Z, U)
     assert G.shape == (512, budget.m)
-    assert G.abs().max().item() <= model_cfg.equilibrium.R_g + 1e-5
+
+    g_bound = getattr(dyn.equilibrium, "g_bound", None)
+    if g_bound is not None and np.isfinite(g_bound):
+        assert G.norm(dim=-1).max().item() <= g_bound + 1e-5
+    else:
+        assert G.abs().max().item() <= cfg.equilibrium.R_g + 1e-5

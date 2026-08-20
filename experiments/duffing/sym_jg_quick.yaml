@@ -1,0 +1,45 @@
+# QUICK twin of sym_jg_full.yaml -- a few minutes on CPU, for smoke-testing the arm.
+#
+#   uv run ftnode-train experiments/duffing/sym_jg_quick.yaml
+#   uv run ftnode-train show runs/sym_jg_quick
+#
+# This checks that the arm RUNS and that its structural invariants hold (J_g symmetric,
+# ||g||_2 within g_bound).  It does NOT produce a result: at 15 epochs the models have not
+# learned the observed coordinate, let alone the hidden one, and the multistable structure
+# has not formed.  Do not quote its numbers -- use sym_jg_full.yaml.
+
+name: sym_jg_quick
+out: runs/sym_jg_quick
+
+budget:
+  sigma_min: 0.1
+  kappa_max: 25.0
+  skew_frac: 0.6
+  m: 4
+
+model:
+  m: 4
+  q: 1
+  activation: silu
+  encoder:     {hidden: 64, depth: 2, z_scale: 2.0, tau: 8}
+  operator:    {hidden: 64, depth: 3, sigma_min: 0.1}
+  equilibrium: {hidden: 64, depth: 3, R_g: 2.0}
+
+train:
+  n_epochs: 15
+  lr: 3.0e-3
+  batch: 64
+  clip: 1.0
+  lam_res: 1.0e-2
+  L: 100
+  L_eval: 300
+  h: 0.05
+
+data_train: {n_traj: 128, L: 100, tau: 8, seed: 0}
+data_val:   {n_traj: 32,  L: 300, tau: 8, seed: 1}
+
+variants:
+  - l-ft-k-svd-clamp
+  - {operator: svd_clamp, equilibrium: grad_potential}
+
+seeds: [0, 1]

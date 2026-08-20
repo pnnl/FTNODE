@@ -134,7 +134,7 @@ def spectral_clamp_safe(Bmat, cap, eps=1e-12):
     singular values)`` -- because the skew argument has paired singular values.
     The clamp is mathematically identical; only the route to ``||B||_2`` changes.
 
-    Two changes on promotion out of ``examples/duffing/_proto_ctrl.py``:
+    Two changes on promotion out of the control prototype:
 
     * The reshape is rank-agnostic, matching the ``transpose(-1, -2)`` above it,
       instead of hardcoding a 3-D batch via ``.view(-1, 1, 1)``.
