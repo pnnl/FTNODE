@@ -149,13 +149,123 @@ conda activate ftnode
 
 ## Usage
 
-Each example contains specific hyperparameters including:
-- Number of training epochs
-- Batch size
-- Initial learning rate
-- Model architecture specifications (layer widths, bounds)
+### Train a small model end to end
 
-Refer to individual example scripts for detailed configuration.
+A κ-bounded latent FT-NODE on the partially observed Duffing oscillator. The model
+is `F(z, u) = A(z) (z - g(z, u))`: you pick an operator `A`, pick an equilibrium
+map `g`, and wrap them in an encoder/decoder pair, because only `q` is measured and
+the latent state has to be inferred from a window of past measurements.
+
+Deliberately tiny so it runs in **about 15 seconds on a laptop CPU**:
+
+```python
+import torch
+
+from ftnode.systems import DuffingDataConfig, make_dataset
+from ftnode.latent import (BoundedTanhG, ClampOperator, Encoder, KappaBudget,
+                           LatentFTNODE, LatentSysID, LinearDecoder)
+from ftnode.train import TrainConfig, train_one, restore_best, rollout_y
+
+# 1. Data. Only q is measured; q_dot is never observed -- that is what makes
+#    this a latent identification problem.
+train = make_dataset(DuffingDataConfig(n_traj=64, L=50,  tau=8, seed=0))
+val   = make_dataset(DuffingDataConfig(n_traj=16, L=100, tau=8, seed=1))
+
+# 2. Model. The budget caps cond(A(z)) <= kappa_max by construction, not by
+#    penalty, so the bound holds at every point of training.
+budget = KappaBudget(sigma_min=0.1, kappa_max=25.0, skew_frac=0.6, m=4)
+
+torch.manual_seed(0)
+model = LatentSysID(
+    Encoder(tau=8, m=4),                                  # measurements -> latent
+    LatentFTNODE(operator=ClampOperator(m=4, budget=budget),       # A(z)
+                 equilibrium=BoundedTanhG(m=4)),                      # g(z, u)
+    LinearDecoder(m=4),                                   # latent -> measurement
+)
+
+# 3. Train. Validation rolls out a longer horizon than training (L_eval > L), so
+#    it measures extrapolation rather than fit.
+model, hist = train_one(
+    model, train, val,
+    TrainConfig(n_epochs=10, lr=3e-3, batch=32, lam_res=1e-2, L=50, L_eval=100),
+    ckpt_path="best-model.pth",
+)
+restore_best(model, hist)
+
+# 4. Evaluate: roll out from a held-out measurement window.
+with torch.no_grad():
+    y_hat, z = rollout_y(model, val.W, val.U, L=100, h=0.05)
+print(f"best val MSE {hist['best_val']:.3e} @ epoch {hist['best_epoch']}")
+print(f"rollout {tuple(y_hat.shape)}   latent {tuple(z.shape)}")
+```
+
+> **This is an API demonstration, not a result.** At 64 trajectories and 10 epochs
+> the model has barely started to fit; the κ bound holds regardless, because it is
+> structural. The paper settings are `n_traj=512, L=200` / `n_traj=64, L=600` with
+> `n_epochs=200`, which takes hours on CPU. Do not quote numbers from the snippet
+> above.
+
+### Swap either half of the model
+
+`A` and `g` are independent axes — any operator works with any equilibrium map, so
+a different model is just a different pair. No config plumbing involved:
+
+```python
+from ftnode.latent import UnboundedOperator, YoulaOperator
+
+# SVD-free kappa bound, same equilibrium map.
+youla = LatentSysID(Encoder(tau=8, m=4),
+                    LatentFTNODE(YoulaOperator(m=4, budget=budget), BoundedTanhG(m=4)),
+                    LinearDecoder(m=4))
+
+# No kappa cap at all -- the baseline the bounded operators are measured against.
+free = LatentSysID(Encoder(tau=8, m=4),
+                   LatentFTNODE(UnboundedOperator(m=4), BoundedTanhG(m=4)),
+                   LinearDecoder(m=4))
+```
+
+Adding a variant on either axis is one module plus one entry in the corresponding
+registry — see the constructor contracts in
+[`ftnode/latent/operator.py`](ftnode/latent/operator.py) and
+[`ftnode/latent/equilibrium.py`](ftnode/latent/equilibrium.py).
+
+### Reproducing frozen results, and config-driven runs
+
+The snippets above build a model directly, which is the right thing when you are
+*making* one. To *reproduce* a committed checkpoint or a paper figure, go through a
+config and its builder instead:
+
+```python
+from ftnode.latent import EncoderConfig, LatentModelConfig, OperatorConfig, build_clamp
+from ftnode.utils import save_config, load_config
+
+cfg = LatentModelConfig(
+    m=budget.m,
+    encoder=EncoderConfig(tau=8),                        # must match the dataset's tau
+    operator=OperatorConfig(sigma_min=budget.sigma_min),
+)
+torch.manual_seed(0)
+model = build_clamp(cfg, budget)                         # == build_latent_ftnode(cfg, budget)
+
+save_config(cfg, "model.yaml")                           # nested sections round-trip
+cfg = load_config(LatentModelConfig, "model.yaml")
+```
+
+Two reasons this path exists rather than being redundant:
+
+- **Construction order is part of the result.** Every submodule draws from the
+  global torch RNG as it initializes, so `torch.manual_seed(s)` only reproduces a
+  frozen run if the pieces are built in the same order — encoder, then equilibrium
+  map, then operator. The builders guarantee that; building by hand gives a
+  perfectly good model with different weights for the same seed.
+- **Checkpoints are bare state dicts** carrying no architecture metadata, so the
+  config is the only record of what produced them. Save it beside the `.pth`.
+
+`build_youla`, `build_unbounded` and `build_latent_node` are the sibling
+shortcuts; `build_latent_node` is the unstructured baseline and takes no `budget`.
+
+For a runnable version with figures and every diagnostic, see
+[`examples/duffing/pkg_kappa_variants.ipynb`](examples/duffing/pkg_kappa_variants.ipynb).
 
 ## Citation
 
