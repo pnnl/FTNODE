@@ -69,8 +69,19 @@ def train_job(
     ckpt_path,
     device=None,
     verbose: bool = True,
+    warm_init=None,
 ):
     """Train one ``(variant, seed)`` and restore its best weights.
+
+    ``warm_init`` is an optional directory of pre-fit equilibrium maps.  When it is
+    set and holds ``<warm_init>/<slug>/seed<seed>.pth``, that state dict is loaded
+    into the equilibrium map after the build and before training, to start the map
+    from a warm potential instead of a cold one.  The load is a no-op when the
+    directory or the file is absent, so every other run is unaffected.  The load
+    happens **after** the seeded build on purpose: it overwrites weights the build
+    already drew, so it consumes no RNG and does not move the operator/encoder
+    streams.  It applies only to a non-baseline variant, because the baseline has no
+    equilibrium map.
 
     .. warning::
        Seeding **immediately before the build** is the reproducibility contract:
@@ -91,6 +102,15 @@ def train_job(
     torch.manual_seed(seed)
     np.random.seed(seed)
     model = build_variant(spec, variant).to(device)
+    if warm_init is not None and not variant.is_baseline:
+        warm = pathlib.Path(warm_init) / variant.slug / f"seed{seed}.pth"
+        if warm.exists():
+            model.dynamics.equilibrium.load_state_dict(
+                torch.load(warm, map_location=device)
+            )
+            model.dynamics.equilibrium.project_()
+            if verbose:
+                print(f"[{variant.slug}-s{seed}] warm-started equilibrium from {warm}")
     model, hist = train_one(
         model, train, val, spec.train,
         ckpt_path=ckpt_path,
@@ -211,6 +231,7 @@ def run_experiment(
     rollouts: bool = True,
     verbose: bool = True,
     argv=None,
+    warm_init=None,
 ) -> RunPaths:
     """Train ``(variant, seed)`` jobs from ``spec`` into its run directory.
 
@@ -227,6 +248,10 @@ def run_experiment(
         skip_existing: Skip jobs whose checkpoint *and* history already exist, so
             re-running the identical command after a killed process resumes at
             ``(variant, seed)`` granularity.
+        warm_init: Optional directory of pre-fit equilibrium maps.  Each job loads
+            ``<warm_init>/<slug>/seed<seed>.pth`` into its equilibrium map after the
+            build, when that file exists; absent file or ``None`` is a no-op.  See
+            :func:`train_job`.
         rollouts: Cache validation rollouts into ``rollouts.npz`` afterwards, so
             the analysis notebook does not recompute them.  Covers every variant in
             ``spec``, not just this shard's; jobs with no checkpoint stay ``NaN``.
@@ -263,7 +288,7 @@ def run_experiment(
 
         _, hist = train_job(
             spec, variant, seed, train, val,
-            ckpt_path=ckpt, device=device, verbose=verbose,
+            ckpt_path=ckpt, device=device, verbose=verbose, warm_init=warm_init,
         )
         with open(hist_path, "w") as fh:
             json.dump(_hist_to_json(hist, paths.root), fh, indent=1)

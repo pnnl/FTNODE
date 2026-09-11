@@ -214,10 +214,6 @@ __marimo__/
 # tracked deliberately and are not matched by this pattern.
 examples/duffing/pkg-*.pth
 
-# misc
-todo
-commit.txt
-markdown/
 # Training run artifacts (checkpoints, histories, cached rollouts).  The
 # experiment files under experiments/ ARE tracked -- they are small and are the
 # provenance of every figure; the runs they produce are not.
