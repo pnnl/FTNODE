@@ -1,0 +1,52 @@
+# Set lam_res = 0, to test whether the residual penalty is what flattens Phi.
+#
+# For g = grad_z Phi, the residual penalty lam_res * E||z - g||^2 equals
+# lam_res * E||grad V||^2.  That penalty drives ||grad V|| toward zero.  It flattens the
+# curvature that a saddle needs, so it fights multistability under this parameterization.
+# The incumbent tanh g is immune, because its g is not a gradient.  sym_jg_full ran at
+# lam_res = 1e-2 and Phi stayed flat.  This arm removes the penalty and asks whether the
+# pitchfork then forms.
+#
+# The control l-ft-k-svd-clamp is carried unchanged.  It is reused from runs/sym_jg_full,
+# a lam_res = 1e-2 model.  It is the fixed reference and does not retrain here.  lam_res = 0
+# affects only the grad_potential arm, the one arm that trains.  Compare across seeds, never
+# within one.  A different g parameter count shifts A(z) at init.  See sym_jg_full.yaml.
+#
+# Do not set equilibrium.kwargs here.  They are global across variants, and the tanh_mlp
+# control arm rejects them.
+
+name: sym_jg_full_lamres_0
+out: runs/sym_jg_full_lamres_0
+
+budget:
+  sigma_min: 0.1
+  kappa_max: 25.0
+  skew_frac: 0.6
+  m: 4
+
+model:
+  m: 4
+  q: 1
+  activation: silu
+  encoder:     {hidden: 64, depth: 2, z_scale: 2.0, tau: 8}
+  operator:    {hidden: 64, depth: 3, sigma_min: 0.1}
+  equilibrium: {hidden: 64, depth: 3, R_g: 2.0}
+
+train:
+  n_epochs: 200
+  lr: 3.0e-3
+  batch: 64
+  clip: 1.0
+  lam_res: 0.0          # lever 10.1: was 1.0e-2
+  L: 200
+  L_eval: 600
+  h: 0.05
+
+data_train: {n_traj: 512, L: 200, tau: 8, seed: 0}
+data_val:   {n_traj: 64,  L: 600, tau: 8, seed: 1}
+
+variants:
+  - l-ft-k-svd-clamp                                    # control: g = R_g tanh(MLP), reused
+  - {operator: svd_clamp, equilibrium: grad_potential}  # slug: svd_clamp+grad_potential
+
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]

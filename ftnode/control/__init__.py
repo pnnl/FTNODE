@@ -1,8 +1,5 @@
 """Learned-splitting control for latent FT-NODE models.
 
-Promoted from ``examples/duffing/duffing_learned_splitting_control.ipynb`` and the
-``_proto_*.py`` prototypes beside it.
-
 The idea: identification fixes the plant as a latent field ``F_theta``, but the
 splitting ``F_theta = f(z)(z - g(z, u))`` is not unique -- for any invertible
 ``f``, setting ``g = z - f^{-1} F_theta`` reproduces ``F_theta`` exactly.  The

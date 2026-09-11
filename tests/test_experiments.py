@@ -523,3 +523,77 @@ def test_cli_defaults_to_the_train_subcommand(tmp_path):
     spec_path.write_text(yaml.safe_dump(_spec(tmp_path).to_dict()))
     assert main([str(spec_path), "--dry-run"]) == 0
     assert main(["train", str(spec_path), "--dry-run"]) == 0
+
+
+# ------------------------------------------------------------------ warm-init
+
+_GRAD = {"operator": "svd_clamp", "equilibrium": "grad_potential"}
+
+
+def test_warm_init_missing_file_is_a_noop(tmp_path):
+    """The reproducibility contract: --warm-init with no matching file changes nothing.
+
+    Every run without a warm file -- which is every existing experiment -- must be
+    bitwise what it was before the flag existed. The guard checks `warm_init is not
+    None` and then `file.exists()`, so an empty directory reaches no tensor op.
+    """
+    a = _spec(tmp_path / "a", variants=[_GRAD], seeds=[0])
+    run_experiment(a, device=CPU, rollouts=False, verbose=False)
+    b = _spec(tmp_path / "b", variants=[_GRAD], seeds=[0])
+    run_experiment(b, device=CPU, rollouts=False, verbose=False, warm_init=tmp_path / "empty")
+
+    slug = "svd_clamp+grad_potential"
+    ca = torch.load(a.paths.ckpt(slug, 0), map_location="cpu")
+    cb = torch.load(b.paths.ckpt(slug, 0), map_location="cpu")
+    assert sorted(ca) == sorted(cb)
+    for k in ca:
+        assert torch.equal(ca[k], cb[k]), k
+
+
+def test_warm_init_loads_the_equilibrium(tmp_path):
+    """A matching warm file replaces the equilibrium weights before training.
+
+    Trained at `n_epochs=0`, so nothing mutates the loaded weights and the returned
+    model's equilibrium must equal the warm tensors exactly -- comparing the tensors,
+    not a derived constant like `g_bound`.
+    """
+    from ftnode.experiments.run import train_job
+
+    spec = _spec(tmp_path, variants=[_GRAD], seeds=[0],
+                 train={**BASE["train"], "n_epochs": 0})
+    variant = spec.variants[0]
+
+    # A known, projected warm equilibrium distinct from the seed-0 init.
+    torch.manual_seed(123)
+    warm_g = build_variant(spec, variant).dynamics.equilibrium
+    with torch.no_grad():
+        for lin in warm_g._linears():
+            lin.weight.normal_()
+    warm_g.project_()
+    warm_dir = tmp_path / "warm"
+    (warm_dir / variant.slug).mkdir(parents=True)
+    torch.save(warm_g.state_dict(), warm_dir / variant.slug / "seed0.pth")
+
+    train = make_dataset(spec.data_train)
+    val = make_dataset(spec.data_val)
+    model, _ = train_job(
+        spec, variant, 0, train, val,
+        ckpt_path=tmp_path / "c.pth", device=CPU, verbose=False, warm_init=warm_dir,
+    )
+    got = model.dynamics.equilibrium.state_dict()
+
+    # train_job loads the file then projects, so the reference is that same transform --
+    # projecting is not bitwise-idempotent, so comparing to the pre-save weights would fail
+    # on float noise alone.
+    ref_map = build_variant(spec, variant).dynamics.equilibrium
+    ref_map.load_state_dict(torch.load(warm_dir / variant.slug / "seed0.pth"))
+    ref_map.project_()
+    ref = ref_map.state_dict()
+    assert sorted(got) == sorted(ref)
+    for k in ref:
+        assert torch.equal(got[k], ref[k]), k
+
+    # And it is genuinely the warm map, not the cold seed-0 init the build would give.
+    torch.manual_seed(0)
+    cold = build_variant(spec, variant).dynamics.equilibrium.state_dict()
+    assert not torch.equal(got["net.2.weight"], cold["net.2.weight"])

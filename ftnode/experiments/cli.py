@@ -71,6 +71,9 @@ def _build_parser() -> argparse.ArgumentParser:
     train.add_argument("--no-rollouts", action="store_true",
                        help="do not cache validation rollouts afterwards")
     train.add_argument("--quiet", action="store_true", help="suppress per-epoch progress")
+    train.add_argument("--warm-init", type=pathlib.Path, default=None, metavar="DIR",
+                       help="load a per-seed equilibrium from DIR/<slug>/seed<n>.pth before "
+                            "training; missing file is a no-op")
     train.add_argument("--dry-run", action="store_true",
                        help="print the resolved jobs and exit without training")
 
@@ -111,6 +114,7 @@ def _cmd_train(args) -> int:
         skip_existing=args.skip_existing,
         rollouts=not args.no_rollouts,
         verbose=not args.quiet,
+        warm_init=args.warm_init,
     )
     return 0
 

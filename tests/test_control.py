@@ -1,8 +1,8 @@
 """The four numerical invariants the control stage rests on.
 
-These were the `if __name__ == '__main__'` checks at the bottom of
-`examples/duffing/_proto_ctrl.py`. They are promoted here because they are the
-actual acceptance criteria for the control design, not incidental debug output.
+These were the `if __name__ == '__main__'` checks at the bottom of the control
+prototype. They are promoted here because they are the actual acceptance
+criteria for the control design, not incidental debug output.
 
 All four are algebraic identities in theta and psi, so they hold at random
 initialization -- no checkpoint, no training.

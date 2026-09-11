@@ -16,8 +16,10 @@ import torch.nn as nn
 
 __all__ = [
     "ACTIVATIONS",
+    "ACTIVATION_LIPSCHITZ",
     "resolve_activation",
     "is_lipschitz_1",
+    "lipschitz_bound",
     "MLP",
     "Encoder",
     "LinearDecoder",
@@ -46,6 +48,45 @@ ACTIVATIONS: dict[str, tuple[type, bool]] = {
     "elu": (nn.ELU, True),
     "softplus": (nn.Softplus, True),
 }
+
+
+#: Numeric UPPER bounds on ``sup_t |sigma'(t)|``, keyed as :data:`ACTIVATIONS` is.
+#:
+#: Separate from the ``lipschitz_1`` flag above because a *bound* and a *boolean* answer
+#: different questions.  Anything that composes per-layer gains into a bound on a whole
+#: network needs the number, not the flag: a spectrally capped potential certifies
+#: ``||grad Phi||_2 <= l_sigma**depth * prod_j ||W_j||_2``, and with ``silu`` the
+#: ``l_sigma`` factor is 1.10 per activation rather than 1.
+#:
+#: Values are rounded **up** from :func:`ftnode.diagnostics.empirical_lipschitz`, which is
+#: a grid maximum and therefore a *lower* bound on the true supremum -- rounding up is what
+#: keeps the certificate conservative in the right direction.  Pinned against that
+#: measurement by ``tests/test_grad_potential.py``.
+ACTIVATION_LIPSCHITZ: dict[str, float] = {
+    "silu": 1.10,        # measured 1.0998
+    "gelu": 1.13,        # measured 1.1289
+    "tanh": 1.0,
+    "relu": 1.0,
+    "leaky_relu": 1.0,
+    "elu": 1.0,
+    "softplus": 1.0,
+}
+
+
+def lipschitz_bound(spec) -> float:
+    """Upper bound on the gain of a named activation, for composing a network bound.
+
+    Raises rather than defaulting to ``1.0`` for an unknown spec.  A silent ``1.0`` would
+    hand back a certificate that is not merely loose but *wrong* whenever the activation
+    exceeds unit gain -- which the two defaults, ``silu`` and ``gelu``, both do.
+    """
+    if isinstance(spec, str) and spec in ACTIVATION_LIPSCHITZ:
+        return ACTIVATION_LIPSCHITZ[spec]
+    raise ValueError(
+        f"no Lipschitz bound recorded for activation {spec!r}; "
+        f"choose from {sorted(ACTIVATION_LIPSCHITZ)}, or measure it with "
+        "ftnode.diagnostics.empirical_lipschitz and add it to ACTIVATION_LIPSCHITZ"
+    )
 
 
 def resolve_activation(spec):

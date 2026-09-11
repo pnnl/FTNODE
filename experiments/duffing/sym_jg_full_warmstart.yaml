@@ -1,0 +1,54 @@
+# Warm-start Phi from a feasibility fit, to test whether a cold start is what flattens Phi.
+#
+# sym_jg_full drove Phi flat, so no saddle formed.  A warm Phi that already has curvature
+# starts Adam inside the good basin.  The warm Phi comes from the V-only fit_potential
+# (ftnode.latent.fit_potential), fit against each frozen incumbent field.
+#
+# lam_res stays at 1e-2.  This arm tests warm-start alone, against the sym_jg_full run.
+#
+# Warm-start is NOT set in this file.  A ftnode-train flag applies it: --warm-init <dir>
+# loads a per-seed Phi into the equilibrium after the build.  Run scripts/make_warm_phi.py
+# first to write the warm Phi files.  Without the flag, this file reproduces sym_jg_full
+# exactly.
+#
+# The control l-ft-k-svd-clamp is carried unchanged and reused from runs/sym_jg_full.
+# Compare across seeds, never within one.  See sym_jg_full.yaml.
+#
+# Do not set equilibrium.kwargs here.  They are global across variants, and the tanh_mlp
+# control arm rejects them.
+
+name: sym_jg_full_warmstart
+out: runs/sym_jg_full_warmstart
+
+budget:
+  sigma_min: 0.1
+  kappa_max: 25.0
+  skew_frac: 0.6
+  m: 4
+
+model:
+  m: 4
+  q: 1
+  activation: silu
+  encoder:     {hidden: 64, depth: 2, z_scale: 2.0, tau: 8}
+  operator:    {hidden: 64, depth: 3, sigma_min: 0.1}
+  equilibrium: {hidden: 64, depth: 3, R_g: 2.0}
+
+train:
+  n_epochs: 200
+  lr: 3.0e-3
+  batch: 64
+  clip: 1.0
+  lam_res: 1.0e-2       # kept: this arm isolates warm-start, not the penalty (lever 10.1)
+  L: 200
+  L_eval: 600
+  h: 0.05
+
+data_train: {n_traj: 512, L: 200, tau: 8, seed: 0}
+data_val:   {n_traj: 64,  L: 600, tau: 8, seed: 1}
+
+variants:
+  - l-ft-k-svd-clamp                                    # control: g = R_g tanh(MLP), reused
+  - {operator: svd_clamp, equilibrium: grad_potential}  # slug: svd_clamp+grad_potential
+
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]

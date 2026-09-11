@@ -83,15 +83,15 @@ class SplitOperator(nn.Module):
 class ControlConfig:
     """Control-stage settings.
 
-    Defaults are the values ``duffing_learned_splitting_control.ipynb`` settled
-    on, each for a documented reason:
+    Defaults are the values the control study settled on, each for a documented
+    reason:
 
     ``u_bound = 0.5``
         The admissible input set is ``[-u_bound, u_bound]``.  Deliberately
         **wider** than the identification excitation range (``0.25``): the
-        notebook's reachability study finds a saturated LQR at the saddle
-        stabilizes only 19 of 39 initial conditions at ``|u| <= 0.25`` but all 39
-        at ``|u| <= 0.5``.  0.25 is not enough authority for the task.
+        reachability study finds a saturated LQR at the saddle stabilizes only 19
+        of 39 initial conditions at ``|u| <= 0.25`` but all 39 at ``|u| <= 0.5``.
+        0.25 is not enough authority for the task.
     ``k_trunc = 10``
         Truncated-BPTT window.  Backpropagating through the full 120-step loop
         produces gradient norms spiking to 1e17-1e19, which poison Adam's moments

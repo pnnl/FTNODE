@@ -1,0 +1,67 @@
+# Symmetric-J_g equilibrium map vs the incumbent, at paper settings.
+#
+# The arm under test pairs the unchanged SVD-clamped A(z) with g = grad_z Phi, whose
+# Jacobian is a Hessian and therefore symmetric by construction.  That makes the field a
+# generalized gradient system: V = 0.5||z||^2 - Phi decreases along every trajectory at
+# frozen u, the equilibria are the critical points of V, and their stability type is fixed
+# by V alone for ANY admissible A.  `l-ft-k-svd-clamp` is carried along unchanged as the
+# control -- same operator, same budget, same data, only `g` differs.
+#
+#   nohup uv run ftnode-train experiments/duffing/sym_jg_full.yaml > runs/sym_jg.log 2>&1 &
+#
+# NOTE ON COMPARISON: compare across seeds, never within one.  The equilibrium map is
+# constructed BEFORE the operator, and the scalar potential draws a different number of
+# parameters than the incumbent's m-output map (8769 vs 8964), so at a fixed seed the two
+# arms get structurally identical but numerically different A(z) at initialization.
+#
+# WHY THERE ARE NO `equilibrium.kwargs` HERE: they are GLOBAL across the variants in a file
+# -- ExperimentSpec.model_for replaces only `kind` -- so anything set here is also passed to
+# the `tanh_mlp` control arm, which raises `TypeError: unexpected keyword argument 'cap'`.
+# GradPotentialG's defaults are already the intended configuration (cap=True, g_cap=3.0,
+# w1_cap=10.0), so the arm needs none.  To vary them, the two arms have to live in separate
+# files until per-variant kwargs exist.
+
+name: sym_jg_full
+out: runs/sym_jg_full
+
+budget:
+  sigma_min: 0.1
+  kappa_max: 25.0
+  skew_frac: 0.6
+  m: 4
+
+model:
+  m: 4
+  q: 1
+  activation: silu
+  encoder:     {hidden: 64, depth: 2, z_scale: 2.0, tau: 8}
+  operator:    {hidden: 64, depth: 3, sigma_min: 0.1}
+  # R_g = 2.0 is the incumbent's l-infinity box amplitude, read only by tanh_mlp.
+  # grad_potential ignores it and certifies ||g||_2 <= g_bound instead, from its defaults:
+  #   g_cap = 3.0  -- two-sided window.  The learned equilibria sit at ||z*|| up to 2.41 and
+  #                   z* = g(z*,u), so below ~2.5 the pitchfork is unrepresentable; and
+  #                   r_in = g_cap, so at 4.0 the Nagumo ball R = kappa_max * r_in hits 100
+  #                   and stops beating the incumbent box's 2*sqrt(m) = 4.  3.0 gives R = 75.
+  #   w1_cap = 10  -- deliberately unbalanced.  Reachable curvature scales with ||W_1|| at
+  #                   fixed product, and a saddle needs lambda_max(J_g) > 1 (the incumbent
+  #                   reaches ~2.2).  Equal caps buy a weaker model for the same certificate.
+  equilibrium: {hidden: 64, depth: 3, R_g: 2.0}
+
+train:
+  n_epochs: 200
+  lr: 3.0e-3
+  batch: 64
+  clip: 1.0
+  lam_res: 1.0e-2
+  L: 200
+  L_eval: 600
+  h: 0.05
+
+data_train: {n_traj: 512, L: 200, tau: 8, seed: 0}
+data_val:   {n_traj: 64,  L: 600, tau: 8, seed: 1}
+
+variants:
+  - l-ft-k-svd-clamp                                    # control: g = R_g tanh(MLP)
+  - {operator: svd_clamp, equilibrium: grad_potential}  # slug: svd_clamp+grad_potential
+
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
