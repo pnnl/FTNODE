@@ -1,0 +1,57 @@
+# Saturation test: the kappa-variant comparison at a LONGER schedule.
+#
+# Identical to kappa_full.yaml except name / out / train.n_epochs. Everything else --
+# budget, model, data_train (seed 0), data_val (seed 1), the four variants, seeds 0-9 --
+# is byte-for-byte the same, so the ONLY moving part is the schedule length. Because the
+# LR schedule is CosineAnnealingLR(T_max=n_epochs) (ftnode/train.py:105), setting
+# n_epochs: 600 makes T_max = 600, and this run's own first-200-epoch segment is the
+# matched baseline for the within-run truncation read (min val_extrap[:200] vs [200:]).
+# No package edit; frozen notebooks are untouched.
+#
+# Question: does the l-ft-k-svd-clamp validation floor keep dropping after epoch 200,
+# where the 200-epoch cosine used to quench? On runs/kappa_full_cpu every seed's best
+# epoch lands 161-197 of 200, so this is live.
+#
+# Run it detached and sharded on CPU -- see the plan / arkiv dev/experiment-runner.md.
+# Drop n_epochs to 400 (in a FRESH out dir) to halve compute.
+
+name: kappa_sat
+out: runs/kappa_sat
+
+budget:
+  sigma_min: 0.1
+  kappa_max: 25.0
+  skew_frac: 0.6
+  m: 4
+
+model:
+  m: 4
+  q: 1
+  activation: silu
+  encoder:     {hidden: 64, depth: 2, z_scale: 2.0, tau: 8}
+  operator:    {hidden: 64, depth: 3, sigma_min: 0.1}
+  equilibrium: {hidden: 64, depth: 3, R_g: 2.0}
+
+train:
+  n_epochs: 600         # 3x kappa_full; the retune is the stretched cosine T_max = n_epochs
+  lr: 3.0e-3            # peak lr HELD, to isolate the schedule-length effect
+  batch: 64
+  clip: 1.0
+  lam_res: 1.0e-2
+  L: 200
+  L_eval: 600
+  h: 0.05
+
+data_train: {n_traj: 512, L: 200, tau: 8, seed: 0}
+data_val:   {n_traj: 64,  L: 600, tau: 8, seed: 1}
+
+variants:
+  # l-ft-k-svd-clamp first: it alone decides the saturation verdict, so with per-seed
+  # sharding every process trains it first and the target finishes earliest. Variant
+  # order changes only job ordering, never a per-(variant,seed) result (each reseeds).
+  - l-ft-k-svd-clamp
+  - l-n
+  - l-ft-unbounded
+  - l-ft-k-youla
+
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
