@@ -224,3 +224,8 @@ runs/
 # examples/ are untouched.
 /best-model.pth
 /model.yaml
+
+# Vendored OpenFIM pretrained weights for the FIM x structure factorial. The
+# checkpoint is large and is not ours to redistribute, so it stays untracked;
+# the vendored module code under third_party/openfim/ is committed separately.
+weights/
