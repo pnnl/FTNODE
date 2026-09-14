@@ -9,6 +9,16 @@ from __future__ import annotations
 
 from .backbone import FIMBackbone, load_base_model
 from .fields import FreeFIMField, StructuredFIMField, freeze_uncertainty_head
+from .quick import (
+    DistillConfig,
+    RetuneConfig,
+    distill_structured,
+    drift_mse_on_grid,
+    drift_mse_vs_true,
+    retune_short_rollout,
+    short_horizon_qmse,
+    zero_shot_snapshot,
+)
 
 __all__ = [
     "FIMBackbone",
@@ -16,4 +26,12 @@ __all__ = [
     "FreeFIMField",
     "StructuredFIMField",
     "freeze_uncertainty_head",
+    "RetuneConfig",
+    "DistillConfig",
+    "retune_short_rollout",
+    "distill_structured",
+    "drift_mse_vs_true",
+    "drift_mse_on_grid",
+    "short_horizon_qmse",
+    "zero_shot_snapshot",
 ]
