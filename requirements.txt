@@ -50,7 +50,7 @@ threadpoolctl==3.6.0
 torch==2.10.0
 torchode==1.0.0
 torchtyping==0.1.5
-tornado==6.5.4
+tornado==6.5.8
 tqdm==4.67.2
 traitlets==5.14.3
 typeguard==2.13.3
