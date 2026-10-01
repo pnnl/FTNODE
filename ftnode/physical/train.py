@@ -12,6 +12,7 @@ regularizer: the factorial sets ``lam_res = 0`` for every cell, so a residual te
 """
 from __future__ import annotations
 
+import os
 import pathlib
 import time
 from dataclasses import dataclass
@@ -152,7 +153,10 @@ def train_physical(
         if np.isfinite(val_mse) and val_mse < hist["best_val"]:
             hist["best_val"] = val_mse
             hist["best_epoch"] = epoch
-            torch.save(model.state_dict(), ckpt_path)
+            # Write then rename, so a reader or an interrupt never sees a partial file.
+            tmp = f"{ckpt_path}.tmp"
+            torch.save(model.state_dict(), tmp)
+            os.replace(tmp, ckpt_path)
             since_best = 0
         else:
             since_best += 1

@@ -18,6 +18,7 @@ __all__ = [
     "build_cold_structured",
     "build_fim_unstructured",
     "build_fim_structured",
+    "build_fim_mlp_head",
 ]
 
 
@@ -90,15 +91,18 @@ def _structured_head_numel(cfg: PhysicalConfig) -> int:
     return 2 * _mlp_numel(feat, d * d, H, D) + _mlp_numel(feat + q, d, H, D)
 
 
-def _matched_free_hidden(cfg: PhysicalConfig) -> int:
+def _matched_free_hidden(cfg: PhysicalConfig, in_dim: int | None = None) -> int:
     """Free-head width whose parameter count is closest to the structured head's.
 
-    The free head is ``MLP(2m -> m, hidden, cfg.depth)``.  We search hidden widths and
-    pick the one minimizing the parameter-count gap, so cells 3 and 4 have matched head
-    capacity and the interaction isolates structure.
+    The free head is ``MLP(in_dim -> m, hidden, cfg.depth)``, with ``in_dim = 2m`` for
+    the cell-3 residual (``[drift, x]``) and ``2m + q`` for the cell-5 head
+    (``[drift, x, u]``).  We search hidden widths and pick the one minimizing the
+    parameter-count gap, so the free FIM heads match cell 4's head capacity and the
+    contrasts isolate structure.
     """
     target = _structured_head_numel(cfg)
-    feat, d, D = 2 * cfg.m, cfg.m, cfg.depth
+    feat = 2 * cfg.m if in_dim is None else in_dim
+    d, D = cfg.m, cfg.depth
     best_h, best_gap = cfg.hidden, None
     for h in range(1, 4096):
         gap = abs(_mlp_numel(feat, d, h, D) - target)
@@ -136,5 +140,23 @@ def build_fim_structured(cfg: PhysicalConfig, backbone=None) -> PhysicalField:
         backbone, d=cfg.m, q=cfg.q, hidden=cfg.hidden, depth=cfg.depth,
         sigma_min=cfg.sigma_min, R_g=cfg.R_g, kappa_max=cfg.kappa_max,
         skew_frac=cfg.skew_frac, activation=cfg.activation,
+    )
+    return PhysicalField(field, cfg.h)
+
+
+def build_fim_mlp_head(cfg: PhysicalConfig, backbone=None) -> PhysicalField:
+    """Cell 5: the pretrained FIM backbone with a free MLP head on ``[drift, x, u]``.
+
+    The unstructured control for cell 4: the same head inputs, the head width matched
+    to the structured head's parameter count, and no drift pass-through.
+    """
+    from ..fim import FIMBackbone, MLPHeadFIMField
+
+    if backbone is None:
+        backbone = FIMBackbone.from_pretrained(state_dim=cfg.m)
+    field = MLPHeadFIMField(
+        backbone, d=cfg.m, q=cfg.q,
+        hidden=_matched_free_hidden(cfg, in_dim=2 * cfg.m + cfg.q),
+        depth=cfg.depth, activation=cfg.activation,
     )
     return PhysicalField(field, cfg.h)

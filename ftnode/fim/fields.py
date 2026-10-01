@@ -1,14 +1,17 @@
-"""The two FIM-backed fields for the warm row of the factorial (cells 3 and 4).
+"""The FIM-backed fields for the warm row of the factorial (cells 3, 4, and 5).
 
-Both wrap the same :class:`FIMBackbone` and differ only in the head:
+All wrap the same :class:`FIMBackbone` and differ only in the head:
 
 - :class:`FreeFIMField` (cell 3) -- a residual MLP head on the FIM drift, zero-init so
   the field starts exactly at the pretrained drift.
 - :class:`StructuredFIMField` (cell 4) -- a structured head that reads the FIM drift as
   a feature and forms ``A(x)(x - g(x,u))`` with ``A`` negative definite by construction
   (the same clamp math as ``ClampOperator``, composed from the generic blocks).
+- :class:`MLPHeadFIMField` (cell 5) -- a free MLP head that reads the same FIM feature
+  and ``u`` as the structured head, with no pass-through of the drift.  It is the
+  unstructured control for cell 4: same inputs, matched capacity, no structure.
 
-Both expose the physical-field interface the rollout needs -- ``prepare(window, h)`` and
+All expose the physical-field interface the rollout needs -- ``prepare(window, h)`` and
 ``F(x, u)`` -- plus ``param_groups`` so the FIM backbone gets a low learning rate. The
 uncertainty head is off the drift path and is frozen.
 """
@@ -21,7 +24,7 @@ from ..latent.nets import MLP
 from ..latent.operator import KappaBudget, spectral_clamp
 from .backbone import FIMBackbone
 
-__all__ = ["FreeFIMField", "StructuredFIMField", "freeze_uncertainty_head"]
+__all__ = ["FreeFIMField", "MLPHeadFIMField", "StructuredFIMField", "freeze_uncertainty_head"]
 
 
 def freeze_uncertainty_head(backbone: FIMBackbone) -> None:
@@ -66,6 +69,34 @@ class FreeFIMField(nn.Module):
         drift = self.backbone.drift(x)
         feat = torch.cat([drift, x], dim=-1)
         return drift + self.res(feat)
+
+    def param_groups(self, lr, lr_backbone=None):
+        return _param_groups(self, self.backbone, lr, lr_backbone)
+
+
+class MLPHeadFIMField(nn.Module):
+    """Cell 5: ``F(x,u) = MLP([drift(x), x, u])``, default init, no drift pass-through.
+
+    The head reads exactly what the cell-4 structured head reads -- the differentiable
+    FIM drift, the state, and ``u`` -- and its width is chosen by the builder so its
+    parameter count matches the structured head's.  So cell 4 against cell 5 differs
+    only in the structure.  Unlike cell 3, the field does not start at the FIM drift.
+    """
+
+    def __init__(self, backbone: FIMBackbone, d=2, q=1, hidden=64, depth=2, activation="silu"):
+        super().__init__()
+        self.backbone = backbone
+        self.d, self.q = d, q
+        self.net = MLP(2 * d + q, d, hidden, depth, activation=activation)
+        freeze_uncertainty_head(backbone)
+
+    def prepare(self, window, h):
+        self.backbone.prepare(window, h)
+
+    def F(self, x, u):
+        if u.dim() == x.dim() - 1:
+            u = u.unsqueeze(-1)
+        return self.net(torch.cat([self.backbone.drift(x), x, u], dim=-1))
 
     def param_groups(self, lr, lr_backbone=None):
         return _param_groups(self, self.backbone, lr, lr_backbone)

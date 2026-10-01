@@ -116,6 +116,29 @@ def test_fim_head_budgets_are_matched():
     assert abs(free - struct) / struct < 0.02
 
 
+def test_fim_mlp_head_budget_is_matched():
+    # The cell-5 head reads [drift, x, u] and is sized to the cell-4 head's parameter count.
+    from ftnode.physical.config import (
+        _matched_free_hidden,
+        _mlp_numel,
+        _structured_head_numel,
+    )
+
+    cfg = PhysicalConfig()
+    in_dim = 2 * cfg.m + cfg.q
+    struct = _structured_head_numel(cfg)
+    head = _mlp_numel(in_dim, cfg.m, _matched_free_hidden(cfg, in_dim=in_dim), cfg.depth)
+    assert abs(head - struct) / struct < 0.02
+
+
+def test_cell3_head_width_is_unchanged():
+    # The cell-3 width feeds the committed checkpoints; the in_dim default must keep it.
+    from ftnode.physical.config import _matched_free_hidden
+
+    cfg = PhysicalConfig()
+    assert _matched_free_hidden(cfg) == _matched_free_hidden(cfg, in_dim=2 * cfg.m)
+
+
 def test_same_seed_reproduces_the_structured_build():
     cfg = PhysicalConfig()
     torch.manual_seed(0)

@@ -1,4 +1,4 @@
-"""Tests for the FIM-backed cells (3 and 4).
+"""Tests for the FIM-backed cells (3, 4, and 5).
 
 The unit tests use a mock backbone, so they are fast and need no weights. One
 integration test loads the real ``base_model`` and runs only when the checkpoint is
@@ -10,7 +10,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from ftnode.fim.fields import FreeFIMField, StructuredFIMField
+from ftnode.fim.fields import FreeFIMField, MLPHeadFIMField, StructuredFIMField
 
 _WEIGHTS = (
     pathlib.Path(__file__).resolve().parents[1]
@@ -47,7 +47,8 @@ def test_free_field_starts_at_the_fim_drift():
 
 
 def test_uncertainty_head_is_frozen_in_both_fim_fields():
-    for field in (FreeFIMField(MockBackbone()), StructuredFIMField(MockBackbone())):
+    for field in (FreeFIMField(MockBackbone()), StructuredFIMField(MockBackbone()),
+                  MLPHeadFIMField(MockBackbone())):
         assert all(not p.requires_grad for p in field.backbone.fim.u_model.parameters())
 
 
@@ -65,6 +66,16 @@ def test_structured_fim_field_value_is_finite():
     field = StructuredFIMField(MockBackbone(), d=2)
     out = field.F(torch.randn(7, 2), torch.randn(7))
     assert out.shape == (7, 2) and torch.isfinite(out).all()
+
+
+def test_mlp_head_field_reads_u_and_is_finite():
+    torch.manual_seed(0)
+    field = MLPHeadFIMField(MockBackbone(), d=2, q=1)
+    x = torch.randn(7, 2)
+    a, b = field.F(x, torch.zeros(7)), field.F(x, torch.ones(7))
+    assert a.shape == (7, 2) and torch.isfinite(a).all()
+    # Unlike cell 3, u enters the field directly.
+    assert not torch.allclose(a, b)
 
 
 def test_param_groups_split_backbone_from_head():

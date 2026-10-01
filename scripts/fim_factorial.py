@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Driver for the FIM x ftnode-structure 2x2 factorial on physical-state Duffing.
+"""Driver for the FIM x ftnode-structure factorial on physical-state Duffing.
 
-The four cells cross {cold, FIM-backbone} init with {unstructured, structured} field,
-all in the physical state ``x = (q, q_dot)`` on one shared pipeline (see
+Cells 1-4 cross {cold, FIM-backbone} init with {unstructured, structured} field, all in
+the physical state ``x = (q, q_dot)`` on one shared pipeline (see
 ``ftnode.physical`` and the plan).  Each ``(cell, seed)`` is reseeded immediately
 before its build, trained with :func:`ftnode.physical.train.train_physical`, and its
-best-validation checkpoint is scored on held-out test splits.
+best-validation checkpoint is scored on held-out test splits.  Cell 5 is the matched
+unstructured control for cell 4: a free MLP head on the same ``[drift, x, u]`` input,
+with no drift pass-through.
 
 The cold cells (1, 2) run now.  The FIM cells (3, 4) need the vendored OpenFIM
 backbone (``ftnode.fim``); until it is present their builders raise
@@ -31,10 +33,12 @@ from ftnode.physical.config import (
     PhysicalConfig,
     build_cold_structured,
     build_cold_unstructured,
+    build_fim_mlp_head,
     build_fim_structured,
     build_fim_unstructured,
 )
-from ftnode.physical.train import PhysTrainConfig, rollout_q, train_physical
+from ftnode.physical.metrics import rollout_metrics, rollout_test_split
+from ftnode.physical.train import PhysTrainConfig, train_physical
 from ftnode.systems import DuffingDataConfig, make_dataset
 from ftnode.train import restore_best
 
@@ -44,12 +48,13 @@ CELLS = {
     2: ("cold-structured", build_cold_structured, False),
     3: ("fim-unstructured", build_fim_unstructured, True),
     4: ("fim-structured", build_fim_structured, True),
+    5: ("fim-mlp-head", build_fim_mlp_head, True),
 }
 
 
 def _parse_cells(spec: str) -> list[int]:
     if spec.strip() == "all":
-        return [1, 2, 3, 4]
+        return sorted(CELLS)
     out = [int(s) for s in spec.split(",")]
     for c in out:
         if c not in CELLS:
@@ -75,37 +80,36 @@ def _data_configs(args):
     return train, val, test_seeds
 
 
-def _score(model, test_cfgs, L, h, device):
-    """Per-test-seed measured-q MSE, plus mean and std across seeds."""
-    model.eval()
-    per = {}
-    with torch.no_grad():
-        for ts, cfg in test_cfgs:
-            ds = make_dataset(cfg).to(device)
-            if hasattr(model, "prepare"):
-                model.prepare(ds.W)
-            qhat = rollout_q(model, ds.W, ds.U, L, h)
-            mse = ((qhat - ds.Y) ** 2).mean().item()
-            per[ts] = mse if np.isfinite(mse) else float("nan")
+def score(model, test_cfgs, L, h, device):
+    """Aggregate measured-q MSE per test seed, plus the full rollout metric set.
+
+    ``test_mse_mean`` is the mean of the per-seed MSEs (the number the factorial always
+    reported).  ``metrics`` is :func:`ftnode.physical.metrics.rollout_metrics` over all
+    test trajectories pooled.
+    """
+    qhat, y, per = rollout_test_split(model, test_cfgs, L, h, device)
     vals = np.array(list(per.values()), float)
     return {
         "test_mse_by_seed": per,
         "test_mse_mean": float(np.nanmean(vals)) if np.isfinite(vals).any() else float("nan"),
         "test_mse_std": float(np.nanstd(vals)) if np.isfinite(vals).any() else float("nan"),
+        "metrics": rollout_metrics(qhat, y),
     }
 
 
-def _contrasts(scores):
-    """Simple effects and the interaction, paired over model seeds.
+def contrasts(scores):
+    """Simple effects and the interactions, paired over model seeds.
 
-    ``scores[cell_name][seed]`` is a per-seed test-mean MSE.  The interaction is
+    ``scores[cell_name][seed]`` is a per-seed test-mean MSE.  The 2x2 interaction is
     ``(cell4 - cell3) - (cell2 - cell1)``, the two simple effects are
     ``cell2 - cell1`` and ``cell4 - cell3``, and the pretraining effect is
-    ``cell3 - cell1``.  Each is reported as a paired mean +/- std over seeds that have
-    all the cells it needs.
+    ``cell3 - cell1``.  Cell 5 adds the matched structure effect ``cell4 - cell5`` (same
+    head input, no pass-through), its interaction against the cold row, and the
+    pass-through effect ``cell3 - cell5``.  Each is reported as a paired mean +/- std
+    over seeds that have all the cells it needs.
     """
     by = {CELLS[c][0]: scores.get(CELLS[c][0], {}) for c in CELLS}
-    c1, c2, c3, c4 = (by[CELLS[k][0]] for k in (1, 2, 3, 4))
+    c1, c2, c3, c4, c5 = (by[CELLS[k][0]] for k in (1, 2, 3, 4, 5))
 
     def paired(a, b):
         seeds = sorted(set(a) & set(b))
@@ -128,6 +132,9 @@ def _contrasts(scores):
         "structure_fim (cell4-cell3)": paired(c4, c3),
         "pretraining (cell3-cell1)": paired(c3, c1),
         "interaction ((cell4-cell3)-(cell2-cell1))": paired2(c4, c3, c2, c1),
+        "structure_fim_matched (cell4-cell5)": paired(c4, c5),
+        "interaction_matched ((cell4-cell5)-(cell2-cell1))": paired2(c4, c5, c2, c1),
+        "passthrough (cell3-cell5)": paired(c3, c5),
     }
 
 
@@ -172,6 +179,7 @@ def main(argv=None):
           f"test seeds {test_seeds}")
 
     scores: dict[str, dict[int, float]] = {}
+    metrics: dict[str, dict[int, dict]] = {}
     skipped = []
     for cell in cells:
         name, build, needs_fim = CELLS[cell]
@@ -200,33 +208,42 @@ def main(argv=None):
             restore_best(model, hist, device, verbose=False)
             with open(cell_dir / f"seed{seed}.hist.json", "w") as fh:
                 json.dump(hist, fh, indent=1)
-            sc = _score(model, test_cfgs, args.L_eval, args.h, device)
+            sc = score(model, test_cfgs, args.L_eval, args.h, device)
             scores.setdefault(name, {})[seed] = sc["test_mse_mean"]
+            metrics.setdefault(name, {})[seed] = sc["metrics"]
+            m = sc["metrics"]
             print(f"[{name}-s{seed}] best_val {hist['best_val']:.3e} @ ep {hist['best_epoch']}  "
-                  f"test {sc['test_mse_mean']:.3e} +/- {sc['test_mse_std']:.3e}")
+                  f"test {sc['test_mse_mean']:.3e} +/- {sc['test_mse_std']:.3e}  "
+                  f"wrong wells {m.get('wrong_wells', '-')}/{m['n_traj']}  "
+                  f"transient {m.get('transient_mse', float('nan')):.3e}")
 
-    contrasts = _contrasts(scores)
+    con = contrasts(scores)
     payload = {
         "cells_run": [CELLS[c][0] for c in cells],
         "seeds": seeds,
         "test_seeds": test_seeds,
         "epochs": args.epochs,
         "scores": {k: {str(s): v for s, v in d.items()} for k, d in scores.items()},
-        "contrasts": contrasts,
+        "metrics": {k: {str(s): v for s, v in d.items()} for k, d in metrics.items()},
+        "contrasts": con,
         "skipped": skipped,
     }
     args.out.mkdir(parents=True, exist_ok=True)
-    with open(args.out / "test_eval.json", "w") as fh:
+    # One file per (cells, seeds) invocation, so shards running in parallel into the
+    # same --out never overwrite each other's scores.
+    tag = f"cells{'-'.join(map(str, cells))}_seeds{'-'.join(map(str, seeds))}"
+    out_json = args.out / f"test_eval_{tag}.json"
+    with open(out_json, "w") as fh:
         json.dump(payload, fh, indent=1)
 
     print("\n=== contrasts (paired over seeds, test MSE) ===")
-    for k, v in contrasts.items():
+    for k, v in con.items():
         print(f"  {k}: " + ("--" if v is None else f"{v['mean']:+.4e} +/- {v['std']:.3e} (n={v['n']})"))
     if skipped:
         print("\nskipped cells (FIM backbone not vendored):")
         for name, msg in skipped:
             print(f"  {name}: {msg.splitlines()[0]}")
-    print(f"\nwrote {args.out / 'test_eval.json'}")
+    print(f"\nwrote {out_json}")
 
 
 if __name__ == "__main__":
