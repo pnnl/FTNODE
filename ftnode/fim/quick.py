@@ -13,9 +13,10 @@ region and on an out-of-region grid where the ``-q**3`` term forces the bounded 
 to break (see the ``structural-prior-limits`` note).
 
 No true state is used to train a field or to build a FIM context: contexts come from the
-measured ``q``-window only (``FIMBackbone.prepare``).  ``Xfull`` is used solely to define
-evaluation query states and the true-field targets -- evaluation-oracle querying, never a
-model input in training.
+measured ``q``-window only (``FIMBackbone.prepare``), and training query states are rebuilt
+from the measured ``q`` by finite differences (:func:`reconstruct_states`), because
+``q_dot`` is never measured.  ``Xfull`` is used solely to define evaluation query states
+and the true-field targets -- evaluation-oracle querying, never a model input in training.
 """
 from __future__ import annotations
 
@@ -31,6 +32,7 @@ from ..train import rk4_step
 
 __all__ = [
     "field_drift",
+    "reconstruct_states",
     "set_backbone_trainable",
     "drift_mse_vs_true",
     "visited_box",
@@ -82,6 +84,19 @@ def zero_shot_snapshot(backbone):
     zero-shot field, so it must own an independent copy.
     """
     return copy.deepcopy(backbone)
+
+
+def reconstruct_states(ds: DuffingDataset, h: float) -> torch.Tensor:
+    """States ``(q, q_dot_hat)`` at every target time, from the measured ``q`` only.
+
+    The window and the targets are consecutive samples, so ``[W, Y]`` is one measured
+    record.  ``q_dot_hat`` is its second-order central difference (one-sided at the ends).
+    Returns ``(n_traj, L+1, 2)``, aligned with ``ds.Y`` and with ``ds.Xfull``.
+    """
+    q = torch.cat([ds.W, ds.Y], dim=1)
+    qd = torch.gradient(q, spacing=h, dim=1)[0]
+    tau = ds.W.shape[1]
+    return torch.stack([q[:, tau:], qd[:, tau:]], dim=-1)
 
 
 @torch.no_grad()
@@ -270,15 +285,17 @@ class DistillConfig:
 def _fim_drift_points(backbone, ds: DuffingDataset, h: float):
     """Detached zero-shot FIM drift at every (trajectory, time) state, B-aligned per slice.
 
-    Precomputing the target once means the frozen 13M backbone is not re-run on every
-    distillation step.  Returns flattened ``x (N, 2)``, ``u (N,)``, ``f_fim (N, 2)``.
+    The query states come from :func:`reconstruct_states` (measured ``q`` only), never from
+    the true state ``Xfull``.  Precomputing the target once means the frozen 13M backbone is
+    not re-run on every distillation step.  Returns flattened ``x (N, 2)``, ``u (N,)``,
+    ``f_fim (N, 2)``.
     """
     backbone.prepare(ds.W, h)
-    device = ds.W.device
-    B, T, d = ds.Xfull.shape
+    X = reconstruct_states(ds, h)
+    T = X.shape[1]
     xs, us, fs = [], [], []
     for t in range(T):
-        x = ds.Xfull[:, t, :].to(device)
+        x = X[:, t, :]
         fs.append(backbone.drift(x))
         xs.append(x)
         us.append(ds.U)

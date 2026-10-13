@@ -9,7 +9,7 @@ import torch.nn as nn
 
 from ftnode.fim import quick
 from ftnode.fim.fields import FreeFIMField, StructuredFIMField
-from ftnode.systems import DuffingDataConfig, make_dataset
+from ftnode.systems import DuffingDataConfig, DuffingDataset, make_dataset
 
 
 class MockBackbone(nn.Module):
@@ -97,3 +97,23 @@ def test_context_comes_from_the_window_only():
     bb = MockBackbone()
     quick.distill_structured(StructuredFIMField(bb, d=2), bb, ds, 0.05, quick.DistillConfig(epochs=1, batch=8))
     assert bb.prepared_shape == tuple(ds.W.shape)  # (n_traj, tau) -- the window, not Y/Xfull
+
+
+def test_reconstructed_states_track_the_true_state():
+    ds = _ds()
+    X = quick.reconstruct_states(ds, 0.05)
+    assert X.shape == ds.Xfull.shape
+    assert torch.equal(X[..., 0], ds.Y)                       # q is measured exactly
+    assert (X[..., 1] - ds.Xfull[..., 1]).abs().max() < 0.02  # q_dot by central difference
+
+
+def test_distillation_never_reads_the_true_state():
+    """Poisoning Xfull must not change the distillation: training uses measured q only."""
+    ds = _ds()
+    poisoned = DuffingDataset(W=ds.W, U=ds.U, Y=ds.Y, Xfull=torch.full_like(ds.Xfull, float("nan")))
+    torch.manual_seed(0)
+    bb = MockBackbone()
+    _, losses = quick.distill_structured(StructuredFIMField(bb, d=2), bb, poisoned, 0.05,
+                                         quick.DistillConfig(epochs=2, batch=8))
+    assert all(torch.isfinite(torch.tensor(x)) for x in losses)
+
