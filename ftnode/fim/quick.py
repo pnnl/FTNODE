@@ -33,6 +33,9 @@ from ..train import rk4_step
 __all__ = [
     "field_drift",
     "reconstruct_states",
+    "drift_targets",
+    "retune_drift_match",
+    "DriftMatchConfig",
     "set_backbone_trainable",
     "drift_mse_vs_true",
     "visited_box",
@@ -97,6 +100,21 @@ def reconstruct_states(ds: DuffingDataset, h: float) -> torch.Tensor:
     qd = torch.gradient(q, spacing=h, dim=1)[0]
     tau = ds.W.shape[1]
     return torch.stack([q[:, tau:], qd[:, tau:]], dim=-1)
+
+
+def drift_targets(ds: DuffingDataset, h: float):
+    """Reconstructed states and finite-difference drift targets, from the measured ``q`` only.
+
+    ``x_hat = (q, q_dot_hat)`` as in :func:`reconstruct_states`, and
+    ``xdot_hat = (q_dot_hat, q_ddot_hat)`` with ``q_ddot_hat`` the second difference
+    ``(q[k+1] - 2 q[k] + q[k-1]) / h^2``.  The last target time has no forward neighbour,
+    so it is dropped.  Returns two ``(n_traj, L, 2)`` tensors.
+    """
+    X = reconstruct_states(ds, h)[:, :-1]
+    q = torch.cat([ds.W, ds.Y], dim=1)
+    tau, N = ds.W.shape[1], q.shape[1]
+    qdd = (q[:, tau + 1 : N] - 2 * q[:, tau : N - 1] + q[:, tau - 1 : N - 2]) / h**2
+    return X, torch.stack([X[..., 1], qdd], dim=-1)
 
 
 @torch.no_grad()
@@ -268,6 +286,69 @@ def retune_short_rollout(field, ds: DuffingDataset, h: float, cfg: RetuneConfig,
         losses.append(sum(batch_losses) / len(batch_losses))
         if verbose and (ep % 10 == 0 or ep == cfg.epochs - 1):
             print(f"[retune] ep {ep:3d}  q-rollout mse {losses[-1]:.3e}")
+    return field, losses
+
+
+@dataclass(frozen=True)
+class DriftMatchConfig:
+    """Settings for the drift-matching retune (regression on finite-difference drift).
+
+    ``n_times`` is the number of target times drawn per minibatch; each time is one FIM
+    query per trajectory, so it sets the per-step cost.
+    """
+
+    epochs: int = 40
+    lr: float = 3e-3
+    lr_backbone: float = 5e-6
+    batch: int = 32
+    n_times: int = 8
+    clip: float = 1.0
+
+
+def retune_drift_match(field, ds: DuffingDataset, h: float, cfg: DriftMatchConfig, *, verbose=False):
+    """Fit a field's drift to finite-difference targets: ``F(x_hat, u) ~= xdot_hat``.
+
+    A regression on the vector field with no rollout, the estimated-label analogue of FIM's
+    pretraining objective.  States and targets come from :func:`drift_targets` (measured
+    ``q`` only).  ``field`` exposes ``F(x, u)`` and, for a FIM field, ``prepare(window, h)``
+    and ``param_groups``; only parameters with ``requires_grad`` train, so the caller sets
+    the retune scope.  The FIM context is rebound every minibatch, and each drawn time is
+    queried as one state per trajectory, which keeps the context and query batches aligned.
+    """
+    X, Xdot = drift_targets(ds, h)
+    T = X.shape[1]
+    if hasattr(field, "param_groups"):
+        groups = field.param_groups(cfg.lr, cfg.lr_backbone)
+    else:
+        groups = [{"params": [p for p in field.parameters() if p.requires_grad], "lr": cfg.lr}]
+    opt = torch.optim.Adam(groups)
+    prepare = getattr(field, "prepare", None)
+    N = X.shape[0]
+    losses = []
+    for ep in range(cfg.epochs):
+        perm = torch.randperm(N, device=X.device)
+        batch_losses = []
+        for i in range(0, N, cfg.batch):
+            idx = perm[i : i + cfg.batch]
+            if prepare is not None:
+                prepare(ds.W[idx], h)
+            times = torch.randperm(T)[: min(cfg.n_times, T)]
+            u = ds.U[idx]
+            loss = torch.stack(
+                [((field.F(X[idx, t], u) - Xdot[idx, t]) ** 2).mean() for t in times.tolist()]
+            ).mean()
+            if not torch.isfinite(loss):
+                if verbose:
+                    print(f"[drift-match] non-finite loss at epoch {ep}; stopping")
+                return field, losses
+            opt.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_((p for p in field.parameters() if p.requires_grad), cfg.clip)
+            opt.step()
+            batch_losses.append(loss.item())
+        losses.append(sum(batch_losses) / len(batch_losses))
+        if verbose and (ep % 10 == 0 or ep == cfg.epochs - 1):
+            print(f"[drift-match] ep {ep:3d}  drift mse {losses[-1]:.3e}")
     return field, losses
 
 

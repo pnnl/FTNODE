@@ -117,3 +117,37 @@ def test_distillation_never_reads_the_true_state():
                                          quick.DistillConfig(epochs=2, batch=8))
     assert all(torch.isfinite(torch.tensor(x)) for x in losses)
 
+
+def test_drift_targets_match_the_true_field_on_clean_data():
+    from ftnode.systems import duffing_field_torch
+
+    ds = make_dataset(DuffingDataConfig(n_traj=4, L=40, tau=8, h=0.05, seed=0))
+    X, Xdot = quick.drift_targets(ds, 0.05)
+    assert X.shape == Xdot.shape == (4, 40, 2)
+    true = duffing_field_torch(ds.Xfull[:, :-1].reshape(-1, 2), ds.U.repeat_interleave(40), _params())
+    assert (Xdot.reshape(-1, 2) - true).abs().max() < 0.05
+
+
+def test_drift_match_never_reads_the_true_state_and_lowers_the_loss():
+    from ftnode.physical import UnstructuredField
+
+    ds = make_dataset(DuffingDataConfig(n_traj=8, L=30, tau=8, h=0.05, seed=0))
+    poisoned = DuffingDataset(W=ds.W, U=ds.U, Y=ds.Y, Xfull=torch.full_like(ds.Xfull, float("nan")))
+    torch.manual_seed(0)
+    field = UnstructuredField(m=2, q=1)
+    _, losses = quick.retune_drift_match(field, poisoned, 0.05,
+                                         quick.DriftMatchConfig(epochs=40, batch=8, n_times=8))
+    assert all(torch.isfinite(torch.tensor(x)) for x in losses)
+    assert losses[-1] < 0.5 * losses[0]
+
+
+def test_drift_match_respects_a_frozen_backbone():
+    torch.manual_seed(0)
+    bb = MockBackbone()
+    field = StructuredFIMField(bb, d=2)
+    quick.set_backbone_trainable(field, False)
+    before = [p.detach().clone() for p in bb.lin.parameters()]
+    quick.retune_drift_match(field, _ds(), 0.05, quick.DriftMatchConfig(epochs=2, batch=2, n_times=3))
+    assert all(torch.equal(a, b) for a, b in zip(before, bb.lin.parameters()))
+    assert bb.prepared_shape == (2, 8)  # context rebound per minibatch, from the window
+
