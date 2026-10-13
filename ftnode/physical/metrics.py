@@ -84,19 +84,23 @@ def rollout_metrics(qhat, y) -> dict:
     return out
 
 
-def rollout_test_split(model, test_cfgs, L, h, device):
+def rollout_test_split(model, test_cfgs, L, h, device, make=None):
     """Roll ``model`` out on each test config; return concatenated ``(qhat, y)`` arrays.
 
-    ``test_cfgs`` is a list of ``(seed, DuffingDataConfig)``.  Also returns the per-seed
-    aggregate MSE, which is what the factorial reported before these metrics existed.
+    ``test_cfgs`` is a list of ``(seed, cfg)``.  ``make`` builds the dataset from ``cfg``;
+    it defaults to :func:`ftnode.systems.make_dataset` (``cfg`` a ``DuffingDataConfig``).
+    Pass :func:`ftnode.ood_splits.make_split` to score an out-of-distribution split.
+    Also returns the per-seed aggregate MSE, which is what the factorial reported before
+    these metrics existed.
     """
-    from ..systems import make_dataset
+    if make is None:
+        from ..systems import make_dataset as make
 
     model.eval()
     qs, ys, per_seed = [], [], {}
     with torch.no_grad():
         for ts, cfg in test_cfgs:
-            ds = make_dataset(cfg).to(device)
+            ds = make(cfg).to(device)
             if hasattr(model, "prepare"):
                 model.prepare(ds.W)
             qhat = rollout_q(model, ds.W, ds.U, L, h)
