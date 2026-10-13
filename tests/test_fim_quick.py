@@ -4,6 +4,7 @@ Mocked backbone, so fast and weight-free -- the same stand-in pattern as
 ``tests/test_fim_backbone.py``.  These check the routines run, stay finite, and preserve
 the by-construction invariants; they do not train the real 13M model.
 """
+import pytest
 import torch
 import torch.nn as nn
 
@@ -151,3 +152,100 @@ def test_drift_match_respects_a_frozen_backbone():
     assert all(torch.equal(a, b) for a, b in zip(before, bb.lin.parameters()))
     assert bb.prepared_shape == (2, 8)  # context rebound per minibatch, from the window
 
+
+
+class LayeredMockBackbone(nn.Module):
+    """A stand-in with FIM's block names and a dropout on the drift path."""
+
+    def __init__(self, d=2):
+        super().__init__()
+        self.d = d
+        self.fim = nn.Module()
+        self.fim.trajectory_encoder = nn.Linear(d, d)
+        self.fim.location_proj = nn.Linear(d, d)
+        self.fim.functional_decoder = nn.Linear(d, d)
+        self.fim.u_model = nn.Linear(d, 1)
+        self.drop = nn.Dropout(0.5)
+
+    def prepare(self, window, h):
+        pass
+
+    def drift(self, x):
+        f = self.fim
+        return f.functional_decoder(self.drop(f.location_proj(x) + f.trajectory_encoder(x)))
+
+
+def _trainable(module):
+    return all(p.requires_grad for p in module.parameters())
+
+
+def _frozen(module):
+    return all(not p.requires_grad for p in module.parameters())
+
+
+def test_retune_scopes_select_the_backbone_blocks():
+    field = StructuredFIMField(LayeredMockBackbone(), d=2)
+    fim = field.backbone.fim
+    quick.set_retune_scope(field, "R0")
+    assert _frozen(field.backbone) and _trainable(field.L_net)
+    quick.set_retune_scope(field, "R1")
+    assert _trainable(fim.location_proj) and _trainable(fim.functional_decoder)
+    assert _frozen(fim.trajectory_encoder) and _frozen(fim.u_model)
+    quick.set_retune_scope(field, "R2")
+    assert _trainable(fim.trajectory_encoder) and _trainable(fim.functional_decoder)
+    assert _frozen(fim.u_model)
+    with pytest.raises(ValueError):
+        quick.set_retune_scope(field, "R3")
+
+
+def test_backbone_dropout_is_off_in_retune_and_metrics():
+    torch.manual_seed(0)
+    bb = LayeredMockBackbone()
+    assert bb.training  # the pretrained FIM also loads in training mode
+    field = StructuredFIMField(bb, d=2)
+    quick.set_retune_scope(field, "R2")
+    quick.retune_drift_match(field, _ds(), 0.05, quick.DriftMatchConfig(epochs=1, batch=4, n_times=2))
+    assert not bb.training
+    bb.train()
+    a = quick.drift_mse_vs_true(bb, _ds(), 0.05, _params())["mean"]
+    b = quick.drift_mse_vs_true(bb, _ds(), 0.05, _params())["mean"]
+    assert a == b  # deterministic: no dropout noise in the metric
+
+
+def test_start_windows_default_is_the_context_window():
+    ds = _ds()
+    idx = torch.arange(4)
+    w, y = quick._start_windows(ds, idx, 3, random_start=False)
+    assert torch.equal(w, ds.W) and torch.equal(y, ds.Y[:, :4])
+
+
+def test_random_start_windows_are_consecutive_slices_of_the_record():
+    ds = _ds()
+    q = torch.cat([ds.W, ds.Y], dim=1)
+    torch.manual_seed(0)
+    w, y = quick._start_windows(ds, torch.arange(4), 3, random_start=True)
+    tau = ds.W.shape[1]
+    for i in range(4):
+        # Locate the window in the record; the targets must follow it directly.
+        starts = [k for k in range(tau, q.shape[1] - 3) if torch.equal(q[i, k - tau : k], w[i])]
+        assert starts and torch.equal(q[i, starts[0] : starts[0] + 4], y[i])
+
+
+def test_short_rollout_retune_runs_on_a_cold_field_with_random_starts():
+    from ftnode.physical.config import PhysicalConfig, build_cold_structured
+
+    torch.manual_seed(0)
+    field = build_cold_structured(PhysicalConfig()).field
+    _, losses = quick.retune_short_rollout(field, _ds(), 0.05,
+                                           quick.RetuneConfig(epochs=3, batch=4, random_start=True))
+    assert len(losses) == 3 and all(torch.isfinite(torch.tensor(x)) for x in losses)
+
+
+def test_on_epoch_hook_runs_once_per_epoch():
+    seen = []
+    field = FreeFIMField(MockBackbone(), d=2)
+    quick.retune_short_rollout(field, _ds(), 0.05, quick.RetuneConfig(epochs=3, batch=4),
+                               on_epoch=lambda ep, loss: seen.append(ep))
+    quick.retune_drift_match(field, _ds(), 0.05, quick.DriftMatchConfig(epochs=2, batch=4, n_times=2),
+                             on_epoch=lambda ep, loss: seen.append(ep))
+    assert seen == [0, 1, 2, 0, 1]
