@@ -16,7 +16,9 @@ separates transient tracking from well selection:
 - ``osc_energy_ratio`` -- predicted over true per-trajectory variance in the transient
   window (1 = right amplitude, 0 = flat).
 - ``dom_freq_match`` -- fraction of trajectories whose dominant transient frequency matches.
-- ``blowups`` -- trajectories with a non-finite prediction or ``max |q_hat| > BLOWUP``.
+- ``blowups`` -- trajectories that diverge: a non-finite prediction, or ``|q_hat| > BLOWUP``
+  in the late window.  A transient overshoot that returns is not a blow-up (a bounded
+  structured field can overshoot far from the data and still come back).
 - ``settle_near_true`` / ``settle_abs_err_median`` -- where the prediction settles against
   where the truth settles: the late means of ``q_hat`` and ``q`` within ``SETTLE_TOL``, and
   the median absolute gap over the bounded predictions.  Unlike ``wrong_wells``, which reads
@@ -90,7 +92,7 @@ def rollout_metrics(qhat, y) -> dict:
     out["dom_freq_match"] = float(match.mean())
 
     with np.errstate(invalid="ignore"):
-        blown = ~finite | (np.nanmax(np.abs(P), 1) > BLOWUP)
+        blown = ~finite | (np.nanmax(np.abs(P[:, _LATE:]), 1) > BLOWUP)
     gap = np.abs(P[:, _LATE:].mean(1) - Y[:, _LATE:].mean(1))
     out["blowups"] = int(blown.sum())
     out["settle_near_true"] = int(((gap < SETTLE_TOL) & ~blown).sum())

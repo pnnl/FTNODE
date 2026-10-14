@@ -82,3 +82,13 @@ def test_settle_metrics_see_a_wrong_place_on_the_right_side():
     assert m["blowups"] == 1
     assert m["settle_near_true"] == 2
     assert m["settle_abs_err_median"] == pytest.approx(0.0)
+
+
+def test_a_transient_overshoot_that_returns_is_not_a_blowup():
+    y = -1.0 + 0.3 * np.exp(-0.1 * np.arange(601) * 0.05)[None, :].repeat(3, 0)
+    p = y.copy()
+    p[0, 20:40] = 8.0                # far overshoot early, then back on the truth
+    p[1, 450:] = 9.0                 # leaves late: a blow-up
+    p[2, 100] = np.nan               # non-finite anywhere: a blow-up
+    m = rollout_metrics(p, y)
+    assert m["blowups"] == 2
