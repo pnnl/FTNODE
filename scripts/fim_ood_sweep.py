@@ -318,11 +318,11 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--split", required=True, choices=sorted(SPLITS))
     ap.add_argument("--cells", default="all", help="comma list of cell names, or 'all'")
-    ap.add_argument("--seeds", default="0-4", help="model seeds")
+    ap.add_argument("--seeds", nargs="+", default=["0-4"], help="model seeds, e.g. 0-4 or 0 2")
     ap.add_argument("--train-seed", type=int, default=0)
     ap.add_argument("--n-train", type=int, default=64)
     ap.add_argument("--L-train", type=int, default=200)
-    ap.add_argument("--test-seeds", default="1000-1004")
+    ap.add_argument("--test-seeds", nargs="+", default=["1000-1004"])
     ap.add_argument("--n-test", type=int, default=64, help="trajectories per test seed")
     ap.add_argument("--L-eval", type=int, default=600)
     ap.add_argument("--val-seed", type=int, default=1, help="in-distribution validation data seed")
@@ -346,7 +346,7 @@ def main(argv=None):
     if args.smoke:
         args.n_train, args.L_train, args.n_test, args.L_eval, args.n_val = 8, 30, 8, 400, 4
         args.max_steps, args.max_steps_cold, args.val_every, args.val_every_cold = 20, 20, 5, 5
-        args.test_seeds = "1000"
+        args.test_seeds = ["1000"]
         args.out = str(pathlib.Path(args.out) / "smoke")
 
     root = pathlib.Path(args.out)
