@@ -282,7 +282,23 @@ def run_job(split, cell, seed, args_dict):
 
 
 SUMMARY_KEYS = ("mse", "wrong_wells", "transient_mse", "late_mse_correct_wells",
-                "osc_energy_ratio", "dom_freq_match", "well_acc_crossers")
+                "osc_energy_ratio", "dom_freq_match", "well_acc_crossers",
+                "settle_near_true", "settle_abs_err_median", "blowups")
+
+
+def rescore(root: pathlib.Path, split: str):
+    """Recompute every job's rollout metrics from its saved predictions (no retraining)."""
+    from ftnode.physical.metrics import rollout_metrics
+
+    n = 0
+    for f in sorted((root / split).glob("*/seed*.npz")):
+        d = np.load(f)
+        path = f.with_suffix(".json")
+        r = json.loads(path.read_text())
+        r["metrics"] = rollout_metrics(d["qhat"].astype(np.float64), d["y"].astype(np.float64))
+        path.write_text(json.dumps(r, indent=1))
+        n += 1
+    print(f"[rescore] {split}: {n} jobs")
 
 
 def summarize(root: pathlib.Path, split: str):
@@ -303,14 +319,16 @@ def summarize(root: pathlib.Path, split: str):
             v = np.array([row[k] for row in rows[cell] if row[k] is not None], dtype=float)
             table[cell][k] = [float(np.nanmean(v)), float(np.nanstd(v))] if v.size else None
     (root / split / "summary.json").write_text(json.dumps(table, indent=1))
-    head = f"{'cell':16s} {'n':>2s} {'mse':>15s} {'wrong':>11s} {'trans':>15s} {'osc':>11s} {'drift_te':>15s} {'drift_tr':>15s}"
+    head = (f"{'cell':16s} {'n':>2s} {'near_true':>11s} {'settle_err':>13s} {'blowups':>11s} "
+            f"{'trans':>15s} {'osc':>11s} {'drift_te':>15s} {'drift_tr':>15s}")
     print(head)
     for cell, t in table.items():
         def fmt(k, w=15, p=3):
             v = t.get(k)
             return f"{'-':>{w}s}" if v is None else f"{v[0]:.{p}g}±{v[1]:.2g}".rjust(w)
-        print(f"{cell:16s} {t['n_seeds']:2d} {fmt('mse')} {fmt('wrong_wells', 11)} {fmt('transient_mse')} "
-              f"{fmt('osc_energy_ratio', 11)} {fmt('drift_mse_test')} {fmt('drift_mse_train')}")
+        print(f"{cell:16s} {t['n_seeds']:2d} {fmt('settle_near_true', 11)} {fmt('settle_abs_err_median', 13)} "
+              f"{fmt('blowups', 11)} {fmt('transient_mse')} {fmt('osc_energy_ratio', 11)} "
+              f"{fmt('drift_mse_test')} {fmt('drift_mse_train')}")
     return table
 
 
@@ -342,6 +360,8 @@ def main(argv=None):
     ap.add_argument("--skip-existing", action="store_true")
     ap.add_argument("--smoke", action="store_true", help="tiny settings to check the pipeline")
     ap.add_argument("--summarize-only", action="store_true")
+    ap.add_argument("--rescore", action="store_true",
+                    help="recompute metrics from the saved predictions, then summarize")
     args = ap.parse_args(argv)
     if args.smoke:
         args.n_train, args.L_train, args.n_test, args.L_eval, args.n_val = 8, 30, 8, 400, 4
@@ -350,6 +370,10 @@ def main(argv=None):
         args.out = str(pathlib.Path(args.out) / "smoke")
 
     root = pathlib.Path(args.out)
+    if args.rescore:
+        rescore(root, args.split)
+        summarize(root, args.split)
+        return
     if args.summarize_only:
         summarize(root, args.split)
         return

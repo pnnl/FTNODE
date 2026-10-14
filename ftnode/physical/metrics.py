@@ -16,6 +16,11 @@ separates transient tracking from well selection:
 - ``osc_energy_ratio`` -- predicted over true per-trajectory variance in the transient
   window (1 = right amplitude, 0 = flat).
 - ``dom_freq_match`` -- fraction of trajectories whose dominant transient frequency matches.
+- ``blowups`` -- trajectories with a non-finite prediction or ``max |q_hat| > BLOWUP``.
+- ``settle_near_true`` / ``settle_abs_err_median`` -- where the prediction settles against
+  where the truth settles: the late means of ``q_hat`` and ``q`` within ``SETTLE_TOL``, and
+  the median absolute gap over the bounded predictions.  Unlike ``wrong_wells``, which reads
+  only the sign, these see a prediction that settles on the right side at the wrong place.
 """
 from __future__ import annotations
 
@@ -31,6 +36,8 @@ _EARLY = 20          # steps that define a trajectory's early sign
 _LATE = 400          # first step of the late (settled) window
 _TRANSIENT = 200     # end of the transient window
 _OSC = (50, 200)     # window for the oscillation-energy ratio
+BLOWUP = 5.0         # |q_hat| above this counts as a blow-up (the wells sit near |q| = 1)
+SETTLE_TOL = 0.3     # late-mean gap below this counts as settling at the true place
 
 
 def _dom_freq(x):
@@ -81,6 +88,13 @@ def rollout_metrics(qhat, y) -> dict:
     match[finite] = _dom_freq(P[finite]) == _dom_freq(Y[finite])
     match &= _dom_freq(np.nan_to_num(P)) > 0
     out["dom_freq_match"] = float(match.mean())
+
+    with np.errstate(invalid="ignore"):
+        blown = ~finite | (np.nanmax(np.abs(P), 1) > BLOWUP)
+    gap = np.abs(P[:, _LATE:].mean(1) - Y[:, _LATE:].mean(1))
+    out["blowups"] = int(blown.sum())
+    out["settle_near_true"] = int(((gap < SETTLE_TOL) & ~blown).sum())
+    out["settle_abs_err_median"] = float(np.median(gap[~blown])) if (~blown).any() else float("nan")
     return out
 
 

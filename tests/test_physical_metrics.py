@@ -70,3 +70,15 @@ def test_nonfinite_or_flat_predictions_never_match_frequency():
     assert rollout_metrics(p, y)["dom_freq_match"] == 0.0
     flat = np.zeros_like(y)
     assert rollout_metrics(flat, y)["dom_freq_match"] == 0.0
+
+
+def test_settle_metrics_see_a_wrong_place_on_the_right_side():
+    y = -1.0 + 0.3 * np.exp(-0.1 * np.arange(601) * 0.05)[None, :].repeat(4, 0)
+    p = y.copy()
+    p[0] = -2.0                      # right side (sign), wrong place: the g-box edge
+    p[1, 300:] = 1e3                 # blow-up
+    m = rollout_metrics(p, y)
+    assert m["wrong_wells"] == 1     # the sign rule misses row 0 (and counts row 1)
+    assert m["blowups"] == 1
+    assert m["settle_near_true"] == 2
+    assert m["settle_abs_err_median"] == pytest.approx(0.0)
