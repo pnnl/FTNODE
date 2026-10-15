@@ -105,7 +105,7 @@ def _test_cfgs(args, region):
             for ts in parse_seeds(args.test_seeds)]
 
 
-def _build(arm, scope, seed, backbone_factory):
+def _build(arm, scope, seed, backbone_factory, R_g=2.0):
     from ftnode.fim import quick
     from ftnode.physical.config import (
         PhysicalConfig,
@@ -115,7 +115,7 @@ def _build(arm, scope, seed, backbone_factory):
         build_fim_structured,
     )
 
-    cfg = PhysicalConfig()
+    cfg = PhysicalConfig(R_g=R_g)
     backbone = backbone_factory() if arm in ("Z", "M", "S") else None
     # Reseed after the backbone load (building FIMODE draws from the RNG) and before the head.
     torch.manual_seed(seed)
@@ -239,7 +239,8 @@ def run_job(split, cell, seed, args_dict):
 
     train = _data(args, train_region, args.n_train, args.L_train, args.train_seed)
     val = _data(args, train_region, args.n_val, args.L_train, args.val_seed)
-    field = _build(arm, scope, seed, lambda: FIMBackbone.from_pretrained(device="cpu", state_dim=2))
+    field = _build(arm, scope, seed, lambda: FIMBackbone.from_pretrained(device="cpu", state_dim=2),
+                   R_g=args.R_g)
     t1 = time.time()
     cold = arm in ("C1", "C2")
     max_steps = args.max_steps_cold if cold else args.max_steps
@@ -275,6 +276,8 @@ def run_job(split, cell, seed, args_dict):
         "timings_s": {"build": t1 - t0, "train": t2 - t1, "eval": t3 - t2},
     }
     np.savez_compressed(out_dir / f"seed{seed}.npz", qhat=qhat.astype(np.float32), y=y.astype(np.float32))
+    if args.save_ckpt:  # the restored (best validated) field, backbone included
+        torch.save(field.state_dict(), out_dir / f"seed{seed}.pth")
     tmp = path.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(record, indent=1))
     tmp.replace(path)
@@ -354,6 +357,8 @@ def main(argv=None):
     ap.add_argument("--n-times", type=int, default=8, help="drift-matching times per step")
     ap.add_argument("--lr", type=float, default=3e-3)
     ap.add_argument("--lr-backbone", type=float, default=5e-6)
+    ap.add_argument("--R-g", type=float, default=2.0, help="bound of the structured equilibrium map g")
+    ap.add_argument("--save-ckpt", action="store_true", help="save each restored field's state_dict")
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--jobs", type=int, default=12)
     ap.add_argument("--out", default="runs/fim_ood")
