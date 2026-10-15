@@ -237,8 +237,13 @@ def run_job(split, cell, seed, args_dict):
     train_region, test_region = SPLITS[split]
     t0 = time.time()
 
-    train = _data(args, train_region, args.n_train, args.L_train, args.train_seed)
-    val = _data(args, train_region, args.n_val, args.L_train, args.val_seed)
+    # --vary-train-data gives each model seed its own training and validation draw;
+    # --val-match-train sizes the validation set like the training set (at least 4).
+    shift = seed if args.vary_train_data else 0
+    train_seed, val_seed = args.train_seed + shift, args.val_seed + shift
+    n_val = max(args.n_train, 4) if args.val_match_train else args.n_val
+    train = _data(args, train_region, args.n_train, args.L_train, train_seed)
+    val = _data(args, train_region, n_val, args.L_train, val_seed)
     field = _build(arm, scope, seed, lambda: FIMBackbone.from_pretrained(device="cpu", state_dim=2),
                    R_g=args.R_g)
     t1 = time.time()
@@ -267,6 +272,7 @@ def run_job(split, cell, seed, args_dict):
     record = {
         "split": split, "cell": cell, "seed": seed, "arm": arm, "scope": scope, "objective": obj,
         "train_region": train_region or "standard_box", "test_region": test_region,
+        "train_data_seed": train_seed, "val_data_seed": val_seed, "n_val": n_val,
         "args": args_dict,
         "train_losses": losses,
         "val_curve": tracker.curve, "best_step": tracker.best_step, "best_val": tracker.best,
@@ -348,6 +354,10 @@ def main(argv=None):
     ap.add_argument("--L-eval", type=int, default=600)
     ap.add_argument("--val-seed", type=int, default=1, help="in-distribution validation data seed")
     ap.add_argument("--n-val", type=int, default=32)
+    ap.add_argument("--val-match-train", action="store_true",
+                    help="validation set the same size as the training set (at least 4)")
+    ap.add_argument("--vary-train-data", action="store_true",
+                    help="offset the training and validation data seeds by the model seed")
     ap.add_argument("--max-steps", type=int, default=2000, help="FIM cells: optimizer-step cap")
     ap.add_argument("--max-steps-cold", type=int, default=5000, help="cold cells C1, C2")
     ap.add_argument("--val-every", type=int, default=25, help="FIM cells: steps between validations")
