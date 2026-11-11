@@ -1,0 +1,51 @@
+# The grad_potential arm of sym_jg_full with the spectral caps on Phi dropped.
+#
+# Identical to sym_jg_full.yaml except name / out / model.equilibrium.kwargs and the variant
+# list (the grad_potential arm only; its capped counterpart and the incumbent are already in
+# runs/sym_jg_full). Same budget, encoder, operator, schedule, data seeds and model seeds, so
+# seed s builds the same initial weights as the capped arm except that cap=False skips the
+# rescale onto the caps. project_ draws no RNG, so the batch order matches as well.
+#
+# Question: does an uncapped Phi trained from scratch under the rollout loss form the
+# Duffing saddle, where the capped arm (max lambda_max(grad^2 Phi) <= 0.43) never did?
+#
+# The diagnostic trains this spec through scripts/collapse_diagnostic.py (`train --part A`),
+# which mirrors train_one and adds curvature logging and a last checkpoint. The spec also
+# works with ftnode-train as is.
+
+name: sym_jg_uncapped
+out: runs/sym_jg_uncapped
+
+budget:
+  sigma_min: 0.1
+  kappa_max: 25.0
+  skew_frac: 0.6
+  m: 4
+
+model:
+  m: 4
+  q: 1
+  activation: silu
+  encoder:     {hidden: 64, depth: 2, z_scale: 2.0, tau: 8}
+  operator:    {hidden: 64, depth: 3, sigma_min: 0.1}
+  # R_g is read only by tanh_mlp; grad_potential ignores it. cap: false drops the per-layer
+  # spectral caps (g_cap, w1_cap), so ||grad Phi|| has no a priori bound.
+  equilibrium: {hidden: 64, depth: 3, R_g: 2.0, kwargs: {cap: false}}
+
+train:
+  n_epochs: 200
+  lr: 3.0e-3
+  batch: 64
+  clip: 1.0
+  lam_res: 1.0e-2
+  L: 200
+  L_eval: 600
+  h: 0.05
+
+data_train: {n_traj: 512, L: 200, tau: 8, seed: 0}
+data_val:   {n_traj: 64,  L: 600, tau: 8, seed: 1}
+
+variants:
+  - {operator: svd_clamp, equilibrium: grad_potential}  # slug: svd_clamp+grad_potential
+
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
