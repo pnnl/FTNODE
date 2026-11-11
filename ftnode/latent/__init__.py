@@ -58,7 +58,7 @@ from .config import (
     build_unbounded,
     build_youla,
 )
-from .equilibrium import G_KINDS, BoundedTanhG, GradPotentialG, resolve_g
+from .equilibrium import G_KINDS, BoundedTanhG, GradPotentialG, QuarticConfinement, resolve_g
 from .feasibility import FeasibilityResult, fit_potential
 from .model import (
     LatentFTNODE,
@@ -72,6 +72,7 @@ from .nets import (
     MLP,
     Encoder,
     LinearDecoder,
+    LinearSkipEncoder,
     is_lipschitz_1,
     lipschitz_bound,
     resolve_activation,
@@ -97,6 +98,7 @@ __all__ = [
     "lipschitz_bound",
     "MLP",
     "Encoder",
+    "LinearSkipEncoder",
     "LinearDecoder",
     # operator axis
     "KappaBudget",
@@ -111,6 +113,7 @@ __all__ = [
     # equilibrium axis
     "BoundedTanhG",
     "GradPotentialG",
+    "QuarticConfinement",
     "G_KINDS",
     "resolve_g",
     "FeasibilityResult",

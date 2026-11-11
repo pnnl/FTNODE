@@ -13,6 +13,7 @@ re-implemented inline, usable with one operator out of three.
 from __future__ import annotations
 
 import copy
+import math
 
 import torch
 import torch.nn as nn
@@ -20,7 +21,7 @@ import torch.nn as nn
 from .nets import MLP, lipschitz_bound
 from .operator import spectral_clamp_safe
 
-__all__ = ["BoundedTanhG", "GradPotentialG", "G_KINDS", "resolve_g"]
+__all__ = ["BoundedTanhG", "GradPotentialG", "QuarticConfinement", "G_KINDS", "resolve_g"]
 
 
 class BoundedTanhG(MLP):
@@ -293,6 +294,51 @@ G_KINDS: dict[str, type] = {
     "tanh_mlp": BoundedTanhG,
     "grad_potential": GradPotentialG,
 }
+
+
+class QuarticConfinement(nn.Module):
+    """A :class:`GradPotentialG` with a quartic confinement added to the energy.
+
+    The wrapped map gives ``F = A (z - grad Phi) = A grad H`` with
+    ``H = |z|^2/2 - Phi``.  Since ``grad Phi`` is bounded far from the data, ``H`` is
+    quadratic there and the field grows only linearly, so the frequency of large swings
+    cannot rise with their amplitude.  This wrapper uses
+    ``H = |z|^2/2 + (eps/4) |z|^4 - Phi``, i.e. the equilibrium map
+    ``g = grad Phi - eps |z|^2 z``, so the field grows cubically far out.  ``H`` stays
+    coercive, its critical points are still the equilibria, and a critical point that the
+    confinement does not produce lies within ``|z| <= (L_Phi / eps)^(1/3)``.
+
+    ``eps`` is learned (``softplus`` of a raw parameter, so it stays positive) or held fixed
+    as a buffer.  Construction draws no random numbers.  ``phi`` returns the potential
+    whose ``H = |z|^2/2 - phi`` includes the quartic term, so energy checks see it.
+
+    Not registered in :data:`G_KINDS`: it wraps a built map rather than being built from the
+    shared constructor signature.
+    """
+
+    def __init__(self, inner, eps=0.05, learn=True):
+        super().__init__()
+        self.inner = inner
+        self.m, self.q = inner.m, inner.q
+        self.learn = bool(learn)
+        if self.learn:
+            raw = math.log(math.expm1(eps))
+            self.eps_raw = nn.Parameter(torch.tensor(raw))
+        else:
+            self.register_buffer("eps_fixed", torch.tensor(float(eps)))
+
+    @property
+    def eps(self):
+        return nn.functional.softplus(self.eps_raw) if self.learn else self.eps_fixed
+
+    def phi(self, z, u):
+        return self.inner.phi(z, u) - 0.25 * self.eps * (z * z).sum(-1) ** 2
+
+    def forward(self, z, u):
+        return self.inner(z, u) - self.eps * (z * z).sum(-1, keepdim=True) * z
+
+    def project_(self):
+        self.inner.project_()
 
 
 def resolve_g(spec):

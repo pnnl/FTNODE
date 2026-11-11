@@ -195,6 +195,44 @@ class Encoder(nn.Module):
         return self.z_scale * torch.tanh(self.net(w))
 
 
+class LinearSkipEncoder(nn.Module):
+    """``z = L w + b + z_scale * tanh(MLP(w))``: :class:`Encoder` plus a linear map of the window.
+
+    :class:`Encoder` confines every latent to its box, so a window from far outside the
+    training data cannot reach a latent outside it: the model then starts every such
+    trajectory from the wrong state, whatever its vector field.  The linear term removes
+    that ceiling.  A window already determines the state almost linearly (the position is
+    about the last sample, the velocity a difference of samples), so far windows map to
+    latents that grow linearly with the window, while the bounded term still corrects the
+    map near the data.  A small ``z_scale`` makes the linear term carry the state; at the
+    :class:`Encoder` default of 2 the bounded term alone can fit the training windows.
+
+    :meth:`from_encoder` wraps an existing :class:`Encoder` and reuses its MLP, so the
+    bounded term starts from exactly the weights that encoder drew.  ``L`` is initialized
+    from a local generator and ``b`` at zero, so wrapping consumes no global random state.
+    """
+
+    def __init__(self, net, z_scale, skip):
+        super().__init__()
+        self.net = net
+        self.z_scale = z_scale
+        self.skip = skip
+
+    @classmethod
+    def from_encoder(cls, encoder, z_scale=None, seed=0):
+        linears = [layer for layer in encoder.net.modules() if isinstance(layer, nn.Linear)]
+        tau, m = linears[0].in_features, linears[-1].out_features
+        skip = nn.utils.skip_init(nn.Linear, tau, m)
+        with torch.no_grad():
+            nn.init.kaiming_uniform_(skip.weight, a=5 ** 0.5,
+                                     generator=torch.Generator().manual_seed(seed))
+            skip.bias.zero_()
+        return cls(encoder.net, encoder.z_scale if z_scale is None else z_scale, skip)
+
+    def forward(self, w):
+        return self.skip(w) + self.z_scale * torch.tanh(self.net(w))
+
+
 class LinearDecoder(nn.Module):
     """Affine readout of the measured output ``y = q`` from the latent state."""
 
