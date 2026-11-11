@@ -35,6 +35,7 @@ packages = [
     "ftnode.experiments",
     "ftnode.physical",
     "ftnode.fim",
+    "ftnode.foundation",
 ]
 
 [project.scripts]
